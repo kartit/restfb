@@ -1,3 +1,0 @@
-#summary How to get up and running quickly with RestFB
-
-= RestFB User Guide =
