@@ -20,7 +20,7 @@
  * THE SOFTWARE.
  */
 
-package com.restfb.util;
+package com.restfb;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -30,36 +30,20 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 /**
  * A collection of string-handling utility methods.
  * 
  * @author <a href="http://restfb.com">Mark Allen</a>
- * @since 1.6
  */
-public final class StringUtils {
+abstract class StringUtils {
   /**
    * Default charset to use for encoding/decoding strings.
    */
-  public static final String ENCODING_CHARSET = "UTF-8";
+  static final String ENCODING_CHARSET = "UTF-8";
 
-  /**
-   * Logger.
-   */
-
-  /* if[JUL] */
-  private static final java.util.logging.Logger julLogger =
-      java.util.logging.Logger.getLogger(StringUtils.class.getName());
-  /* end[JUL] */
-
-  /* if[LOG4J] */
-  private static final org.apache.log4j.Logger log4jLogger =
-      org.apache.log4j.Logger.getLogger(StringUtils.class);
-  /* end[LOG4J] */
-
-  /* if[JCL] */
-  private static final org.apache.commons.logging.Log jclLogger =
-      org.apache.commons.logging.LogFactory.getLog(StringUtils.class);
-  /* end[JCL] */
+  private static final Logger logger = Logger.getLogger(StringUtils.class);
 
   /**
    * Prevents instantiation.
@@ -73,7 +57,7 @@ public final class StringUtils {
    *          The string to check.
    * @return {@code true} if {@code string} is blank, {@code false} otherwise.
    */
-  public static boolean isBlank(String string) {
+  static boolean isBlank(String string) {
     return string == null || "".equals(string.trim());
   }
 
@@ -86,7 +70,7 @@ public final class StringUtils {
    * @return A trimmed version of {@code string}, or {@code null} if {@code
    *         string} is {@code null} or the trimmed version is a blank string.
    */
-  public static String trimToNull(String string) {
+  static String trimToNull(String string) {
     if (isBlank(string))
       return null;
     return string.trim();
@@ -101,7 +85,7 @@ public final class StringUtils {
    * @return A trimmed version of {@code string}, or an empty string if {@code
    *         string} is {@code null} or the trimmed version is a blank string.
    */
-  public static String trimToEmpty(String string) {
+  static String trimToEmpty(String string) {
     if (isBlank(string))
       return "";
     return string.trim();
@@ -112,7 +96,7 @@ public final class StringUtils {
    * <p>
    * Assumes {@code string} is in {@value #ENCODING_CHARSET} format.
    * 
-   * @param string
+   * @param input
    *          The string to URL-encode.
    * @return The URL-encoded version of the input string, or {@code null} if
    *         {@code string} is {@code null}.
@@ -120,7 +104,7 @@ public final class StringUtils {
    *           If unable to URL-encode because the JVM doesn't support
    *           {@value #ENCODING_CHARSET}.
    */
-  public static String urlEncode(String string) {
+  static String urlEncode(String string) {
     if (string == null)
       return null;
     try {
@@ -146,7 +130,7 @@ public final class StringUtils {
    *           If unable to URL-encode because the JVM doesn't support
    *           {@value #ENCODING_CHARSET}.
    */
-  public static byte[] toBytes(String string) {
+  static byte[] toBytes(String string) {
     if (string == null)
       throw new NullPointerException("Parameter 'string' cannot be null.");
 
@@ -169,8 +153,7 @@ public final class StringUtils {
    * @throws IOException
    *           If an error occurs while processing the {@code inputStream}.
    */
-  public static String fromInputStream(InputStream inputStream)
-      throws IOException {
+  static String fromInputStream(InputStream inputStream) throws IOException {
     if (inputStream == null)
       return null;
 
@@ -193,19 +176,7 @@ public final class StringUtils {
           reader.close();
         } catch (Throwable t) {
           // Really nothing we can do but log the error
-
-          /* if[JUL] */
-          if (julLogger.isLoggable(java.util.logging.Level.WARNING))
-            julLogger.warning("Unable to close stream, continuing on: " + t);
-          /* end[JUL] */
-
-          /* if[LOG4J] */
-          log4jLogger.warn("Unable to close stream, continuing on...", t);
-          /* end[LOG4J] */
-
-          /* if[JCL] */
-          jclLogger.warn("Unable to close stream, continuing on...", t);
-          /* end[JCL] */
+          logger.warn("Unable to close stream, continuing on...", t);
         }
     }
   }
@@ -217,7 +188,7 @@ public final class StringUtils {
    *          The list to join.
    * @return A comma-separated string representation of the given {@code list}.
    */
-  public static String join(List<String> list) {
+  static String join(List<String> list) {
     if (list == null)
       return null;
 

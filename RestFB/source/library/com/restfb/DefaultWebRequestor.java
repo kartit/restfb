@@ -22,7 +22,7 @@
 
 package com.restfb;
 
-import static com.restfb.util.StringUtils.ENCODING_CHARSET;
+import static com.restfb.StringUtils.ENCODING_CHARSET;
 import static java.net.HttpURLConnection.HTTP_INTERNAL_ERROR;
 
 import java.io.Closeable;
@@ -32,7 +32,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import com.restfb.util.StringUtils;
+import org.apache.log4j.Logger;
 
 /**
  * Default implementation of a service that sends HTTP requests to the Facebook
@@ -70,41 +70,16 @@ public class DefaultWebRequestor implements WebRequestor {
   /**
    * Logger.
    */
-
-  /* if[JUL] */
-  private static final java.util.logging.Logger julLogger =
-      java.util.logging.Logger.getLogger(DefaultWebRequestor.class.getName());
-  /* end[JUL] */
-
-  /* if[LOG4J] */
-  private static final org.apache.log4j.Logger log4jLogger =
-      org.apache.log4j.Logger.getLogger(DefaultWebRequestor.class);
-  /* end[LOG4J] */
-
-  /* if[JCL] */
-  private static final org.apache.commons.logging.Log jclLogger =
-      org.apache.commons.logging.LogFactory.getLog(DefaultWebRequestor.class);
-  /* end[JCL] */
+  private static final Logger logger =
+      Logger.getLogger(DefaultWebRequestor.class);
 
   /**
    * @see com.restfb.WebRequestor#executeGet(java.lang.String)
    */
   @Override
   public Response executeGet(String url) throws IOException {
-    /* if[JUL] */
-    if (julLogger.isLoggable(java.util.logging.Level.INFO))
-      julLogger.info("Making a GET request to " + url);
-    /* end[JUL] */
-
-    /* if[LOG4J] */
-    if (log4jLogger.isInfoEnabled())
-      log4jLogger.info("Making a GET request to " + url);
-    /* end[LOG4J] */
-
-    /* if[JCL] */
-    if (jclLogger.isInfoEnabled())
-      jclLogger.info("Making a GET request to " + url);
-    /* end[JCL] */
+    if (logger.isInfoEnabled())
+      logger.info("Making a GET request to " + url);
 
     HttpURLConnection httpUrlConnection = null;
     InputStream inputStream = null;
@@ -120,23 +95,9 @@ public class DefaultWebRequestor implements WebRequestor {
       httpUrlConnection.setRequestMethod("GET");
       httpUrlConnection.connect();
 
-      /* if[JUL] */
-      if (julLogger.isLoggable(java.util.logging.Level.FINER))
-        julLogger.finer("Response headers: "
-            + httpUrlConnection.getHeaderFields());
-      /* end[JUL] */
-
-      /* if[LOG4J] */
-      if (log4jLogger.isTraceEnabled())
-        log4jLogger.trace("Response headers: "
-            + httpUrlConnection.getHeaderFields());
-      /* end[LOG4J] */
-
-      /* if[JCL] */
-      if (jclLogger.isTraceEnabled())
-        jclLogger.trace("Response headers: "
-            + httpUrlConnection.getHeaderFields());
-      /* end[JCL] */
+      if (logger.isTraceEnabled())
+        logger
+          .trace("Response headers: " + httpUrlConnection.getHeaderFields());
 
       try {
         inputStream =
@@ -144,21 +105,8 @@ public class DefaultWebRequestor implements WebRequestor {
               .getErrorStream()
                 : httpUrlConnection.getInputStream();
       } catch (IOException e) {
-        /* if[JUL] */
-        if (julLogger.isLoggable(java.util.logging.Level.WARNING))
-          julLogger.warning("An error occurred while making a GET request to "
-              + url + ": " + e);
-        /* end[JUL] */
-
-        /* if[LOG4J] */
-        log4jLogger.warn("An error occurred while making a GET request to "
-            + url, e);
-        /* end[LOG4J] */
-
-        /* if[JCL] */
-        jclLogger.warn(
-          "An error occurred while making a GET request to " + url, e);
-        /* end[JCL] */
+        logger
+          .warn("An error occurred while making a GET request to " + url, e);
       }
 
       return new Response(httpUrlConnection.getResponseCode(), StringUtils
@@ -186,29 +134,11 @@ public class DefaultWebRequestor implements WebRequestor {
       InputStream binaryAttachment) throws IOException {
     boolean hasBinaryAttachment = binaryAttachment != null;
 
-    /* if[JUL] */
-    if (julLogger.isLoggable(java.util.logging.Level.INFO))
-      julLogger.info("Executing a POST to " + url + " with parameters "
+    if (logger.isInfoEnabled())
+      logger.info("Executing a POST to " + url + " with parameters "
           + (hasBinaryAttachment ? "" : "(sent in request body): ")
           + parameters
           + (hasBinaryAttachment ? " and a binary attachment." : ""));
-    /* end[JUL] */
-
-    /* if[LOG4J] */
-    if (log4jLogger.isInfoEnabled())
-      log4jLogger.info("Executing a POST to " + url + " with parameters "
-          + (hasBinaryAttachment ? "" : "(sent in request body): ")
-          + parameters
-          + (hasBinaryAttachment ? " and a binary attachment." : ""));
-    /* end[LOG4J] */
-
-    /* if[JCL] */
-    if (jclLogger.isInfoEnabled())
-      jclLogger.info("Executing a POST to " + url + " with parameters "
-          + (hasBinaryAttachment ? "" : "(sent in request body): ")
-          + parameters
-          + (hasBinaryAttachment ? " and a binary attachment." : ""));
-    /* end[JCL] */
 
     HttpURLConnection httpUrlConnection = null;
     OutputStream outputStream = null;
@@ -258,23 +188,9 @@ public class DefaultWebRequestor implements WebRequestor {
         outputStream.write(parameters.getBytes(ENCODING_CHARSET));
       }
 
-      /* if[JUL] */
-      if (julLogger.isLoggable(java.util.logging.Level.FINER))
-        julLogger.finer("Response headers: "
-            + httpUrlConnection.getHeaderFields());
-      /* end[JUL] */
-
-      /* if[LOG4J] */
-      if (log4jLogger.isTraceEnabled())
-        log4jLogger.trace("Response headers: "
-            + httpUrlConnection.getHeaderFields());
-      /* end[LOG4J] */
-
-      /* if[JCL] */
-      if (jclLogger.isTraceEnabled())
-        jclLogger.trace("Response headers: "
-            + httpUrlConnection.getHeaderFields());
-      /* end[JCL] */
+      if (logger.isTraceEnabled())
+        logger
+          .trace("Response headers: " + httpUrlConnection.getHeaderFields());
 
       try {
         inputStream =
@@ -282,19 +198,7 @@ public class DefaultWebRequestor implements WebRequestor {
               .getErrorStream()
                 : httpUrlConnection.getInputStream();
       } catch (IOException e) {
-        /* if[JUL] */
-        if (julLogger.isLoggable(java.util.logging.Level.WARNING))
-          julLogger.warning("An error occurred while POSTing to " + url + ": "
-              + e);
-        /* end[JUL] */
-
-        /* if[LOG4J] */
-        log4jLogger.warn("An error occurred while POSTing to " + url, e);
-        /* end[LOG4J] */
-
-        /* if[JCL] */
-        jclLogger.warn("An error occurred while POSTing to " + url, e);
-        /* end[JCL] */
+        logger.warn("An error occurred while POSTing to " + url, e);
       }
 
       return new Response(httpUrlConnection.getResponseCode(), StringUtils
@@ -334,18 +238,7 @@ public class DefaultWebRequestor implements WebRequestor {
     try {
       closeable.close();
     } catch (Throwable t) {
-      /* if[JUL] */
-      if (julLogger.isLoggable(java.util.logging.Level.WARNING))
-        julLogger.warning("Unable to close " + closeable + ": " + t);
-      /* end[JUL] */
-
-      /* if[LOG4J] */
-      log4jLogger.warn("Unable to close " + closeable + ": ", t);
-      /* end[LOG4J] */
-
-      /* if[JCL] */
-      jclLogger.warn("Unable to close " + closeable + ": ", t);
-      /* end[JCL] */
+      logger.warn("Unable to close " + closeable + ": ", t);
     }
   }
 
@@ -364,19 +257,7 @@ public class DefaultWebRequestor implements WebRequestor {
     try {
       httpUrlConnection.disconnect();
     } catch (Throwable t) {
-      /* if[JUL] */
-      if (julLogger.isLoggable(java.util.logging.Level.WARNING))
-        julLogger.warning("Unable to disconnect " + httpUrlConnection + ": "
-            + t);
-      /* end[JUL] */
-
-      /* if[LOG4J] */
-      log4jLogger.warn("Unable to disconnect " + httpUrlConnection + ": ", t);
-      /* end[LOG4J] */
-
-      /* if[JCL] */
-      jclLogger.warn("Unable to disconnect " + httpUrlConnection + ": ", t);
-      /* end[JCL] */
+      logger.warn("Unable to disconnect " + httpUrlConnection + ": ", t);
     }
   }
 

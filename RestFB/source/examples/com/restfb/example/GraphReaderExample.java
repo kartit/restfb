@@ -22,10 +22,8 @@
 
 package com.restfb.example;
 
-import static java.lang.System.currentTimeMillis;
 import static java.lang.System.out;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -77,10 +75,9 @@ public class GraphReaderExample {
     facebookClient = new DefaultFacebookClient(accessToken);
   }
 
-  void runEverything() throws FacebookException {    
+  void runEverything() throws FacebookException {
     fetchObject();
     fetchObjects();
-    fetchObjectsAsMap();
     fetchConnections();
     query();
     multiquery();
@@ -100,17 +97,6 @@ public class GraphReaderExample {
 
     out.println("User name: " + user.getName());
     out.println("Page fan count: " + page.getFanCount());
-  }
-
-  void fetchObjectsAsMap() throws FacebookException {
-    out.println("* Fetching multiple objects at once as a Map *");
-
-    List<String> ids = new ArrayList<String>();
-    ids.add("http://restfb.com");
-    ids.add("http://www.imdb.com/title/tt0117500/");
-
-    Map<String, Object> results = facebookClient.fetchObjects(ids);
-    out.println("Results are " + results);
   }
 
   void fetchObjects() throws FacebookException {
@@ -151,12 +137,11 @@ public class GraphReaderExample {
   void query() throws FacebookException {
     out.println("* FQL Query *");
 
-    List<FqlUser> users =
-        facebookClient.executeQuery(
-          "SELECT uid, name FROM user WHERE uid=220439 or uid=7901103",
-          FqlUser.class);
+    List<User> users =
+        facebookClient.executeQuery("SELECT name FROM user WHERE uid=220439",
+          User.class);
 
-    out.println("User: " + users);
+    out.println("User: " + users.get(0).getName());
   }
 
   void multiquery() throws FacebookException {
@@ -164,59 +149,26 @@ public class GraphReaderExample {
 
     Map<String, String> queries = new HashMap<String, String>();
     queries.put("users",
-      "SELECT uid, name FROM user WHERE uid=220439 OR uid=7901103");
+      "SELECT name FROM user WHERE uid=220439 OR uid=7901103");
     queries.put("likers",
       "SELECT user_id FROM like WHERE object_id=122788341354");
 
     MultiqueryResults multiqueryResults =
         facebookClient.executeMultiquery(queries, MultiqueryResults.class);
 
-    out.println("Users: " + multiqueryResults.users);
-    out.println("People who liked: " + multiqueryResults.likers);
-  }
-
-  /**
-   * Holds results from an "executeQuery" call.
-   * <p>
-   * Be aware that FQL fields don't always map to Graph API Object fields.
-   */
-  public static class FqlUser {
-    @Facebook
-    String uid;
-
-    @Facebook
-    String name;
-
-    @Override
-    public String toString() {
-      return String.format("%s (%s)", name, uid);
-    }
-  }
-
-  /**
-   * Holds results from an "executeQuery" call.
-   * <p>
-   * Be aware that FQL fields don't always map to Graph API Object fields.
-   */
-  public static class FqlLiker {
-    @Facebook("user_id")
-    String userId;
-
-    @Override
-    public String toString() {
-      return userId;
-    }
+    out.println("User count: " + multiqueryResults.users.size());
+    out.println("People who liked: " + multiqueryResults.likers.size());
   }
 
   /**
    * Holds results from a "multiquery" call.
    */
   public static class MultiqueryResults {
-    @Facebook(contains = FqlUser.class)
-    List<FqlUser> users;
+    @Facebook(contains = User.class)
+    List<User> users;
 
-    @Facebook(contains = FqlLiker.class)
-    List<FqlLiker> likers;
+    @Facebook(contains = String.class)
+    List<String> likers;
   }
 
   void search() throws FacebookException {
@@ -275,7 +227,7 @@ public class GraphReaderExample {
     out.println("* Parameter support *");
 
     Date oneWeekAgo =
-        new Date(currentTimeMillis() - 1000L * 60L * 60L * 24L * 7L);
+        new Date(System.currentTimeMillis() - 1000L * 60L * 60L * 24L * 7L);
 
     Connection<Post> filteredFeed =
         facebookClient.fetchConnection("me/feed", Post.class, Parameter.with(
@@ -286,8 +238,8 @@ public class GraphReaderExample {
   }
 
   void rawJsonResponse() throws FacebookException {
-    out.println("* Raw JSON *");
-    out.println("User object JSON: "
+    System.out.println("* Raw JSON *");
+    System.out.println("User object JSON: "
         + facebookClient.fetchObject("me", String.class));
   }
 }

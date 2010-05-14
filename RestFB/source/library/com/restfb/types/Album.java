@@ -25,7 +25,6 @@ package com.restfb.types;
 import java.util.Date;
 
 import com.restfb.Facebook;
-import com.restfb.util.DateUtils;
 
 /**
  * Represents the <a
@@ -109,7 +108,7 @@ public class Album extends NamedFacebookType {
    * @return The time the photo album was initially created.
    */
   public Date getCreatedTime() {
-    return DateUtils.toDateFromLongFormat(createdTime);
+    return StringUtils.toDate(createdTime);
   }
 
   /**
@@ -118,6 +117,6 @@ public class Album extends NamedFacebookType {
    * @return The last time the photo album was updated.
    */
   public Date getUpdatedTime() {
-    return DateUtils.toDateFromLongFormat(updatedTime);
+    return StringUtils.toDate(updatedTime);
   }
 }

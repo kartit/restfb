@@ -22,9 +22,8 @@
 
 package com.restfb;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
-
-import com.restfb.util.StringUtils;
 
 /**
  * Representation of a Facebook API request parameter.
@@ -41,6 +40,11 @@ public final class Parameter {
    * Parameter value.
    */
   public final String value;
+
+  /**
+   * Facebook date format (ISO 8601). Example: 2010-02-28T16:11:08+0000
+   */
+  private static final String FACEBOOK_DATE_FORMAT = "yyyy-MM-dd'T'kk:mm:ssZ";
 
   /**
    * Creates a new parameter with the given {@code name} and {@code value}.
@@ -70,19 +74,18 @@ public final class Parameter {
     // Special handling for Date types - turn them into Facebook date strings.
     // Otherwise, use the JSON value of the type.
     this.value =
-        value instanceof Date ? String
-          .valueOf(((Date) value).getTime() / 1000L) : jsonMapper.toJson(value);
+        value instanceof Date ? new SimpleDateFormat(FACEBOOK_DATE_FORMAT)
+          .format(value) : jsonMapper.toJson(value);
   }
 
   /**
    * Factory method which provides an instance with the given {@code name} and
    * {@code value}.
    * <p>
-   * The {@code value} parameter is often a {@link String} or primitive type
-   * like {@link Integer}, but you may pass in a {@link java.util.List},
-   * {@link java.util.Map}, or your own <tt>@Facebook</tt>-annotated Javabean
-   * and it will be converted to JSON automatically. See the "attachment"
-   * section of <a
+   * The {@code value} parameter is often a {@code String} or primitive type
+   * like {@code Integer}, but you may pass in a {@code List}, {@code Map}, or
+   * your own <tt>@Facebook</tt>-annotated Javabean and it will be converted to
+   * JSON automatically. See the "attachment" section of <a
    * href="http://wiki.developers.facebook.com/index.php/Stream.publish">the
    * stream.publish API documentation</a> for an example of where this is
    * useful.
@@ -109,11 +112,10 @@ public final class Parameter {
    * {@code value}, using the provided {@code jsonMapper} to turn {@code value}
    * into a JSON string.
    * <p>
-   * The {@code value} parameter is often a {@link String} or primitive type
-   * like {@link Integer}, but you may pass in a {@link java.util.List},
-   * {@link java.util.Map}, or your own <tt>@Facebook</tt>-annotated Javabean
-   * and it will be converted to JSON automatically. See the "attachment"
-   * section of <a
+   * The {@code value} parameter is often a {@code String} or primitive type
+   * like {@code Integer}, but you may pass in a {@code List}, {@code Map}, or
+   * your own <tt>@Facebook</tt>-annotated Javabean and it will be converted to
+   * JSON automatically. See the "attachment" section of <a
    * href="http://wiki.developers.facebook.com/index.php/Stream.publish">the
    * stream.publish API documentation</a> for an example of where this is
    * useful.

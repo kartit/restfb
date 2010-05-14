@@ -22,44 +22,46 @@
 
 package com.restfb.types;
 
-import com.restfb.Facebook;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
+ * {@code String}-related utility methods.
+ * 
  * @author <a href="http://restfb.com">Mark Allen</a>
+ * @since 1.5
  */
-public class Url extends NamedFacebookType {
-  @Facebook
-  private Long shares;
+abstract class StringUtils {
+  /**
+   * Prevents instantiation.
+   */
+  private StringUtils() {}
 
-  @Facebook
-  private String picture;
+  /**
+   * Facebook date format (ISO 8601). Example: 2010-02-28T16:11:08+0000
+   */
+  private static final String FACEBOOK_DATE_FORMAT = "yyyy-MM-dd'T'kk:mm:ssZ";
 
-  @Facebook
-  private String link;
+  /**
+   * Returns a Java representation of a Facebook {@code date} string.
+   * 
+   * @param date
+   *          Facebook {@code date} string.
+   * @return Java date representation of the given Facebook {@code date} string.
+   * @throws IllegalArgumentException
+   *           If the provided {@code date} isn't in the Facebook date format
+   *           (ISO 8601).
+   */
+  static Date toDate(String date) throws IllegalArgumentException {
+    if (date == null)
+      return null;
 
-  @Facebook
-  private String category;
-
-  @Facebook("fan_count")
-  private Long fanCount;
-
-  public Long getShares() {
-    return shares;
-  }
-
-  public String getPicture() {
-    return picture;
-  }
-
-  public String getLink() {
-    return link;
-  }
-
-  public String getCategory() {
-    return category;
-  }
-
-  public Long getFanCount() {
-    return fanCount;
+    try {
+      return new SimpleDateFormat(FACEBOOK_DATE_FORMAT).parse(date);
+    } catch (ParseException e) {
+      throw new IllegalArgumentException("Unable to parse date '" + date
+          + "' using format string '" + FACEBOOK_DATE_FORMAT + "'", e);
+    }
   }
 }

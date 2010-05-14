@@ -26,9 +26,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.restfb.util.ReflectionUtils;
-import com.restfb.util.StringUtils;
-
 /**
  * Represents a <a href="http://developers.facebook.com/docs/api">Graph API
  * Connection type</a>.
@@ -37,26 +34,24 @@ import com.restfb.util.StringUtils;
  */
 public class Connection<T> {
   private final List<T> data;
-  private final String previous;
-  private final String next;
+  private final boolean hasPrevious;
+  private final boolean hasNext;
 
   /**
    * Creates a connection with the given data and previous/next flags.
    * 
    * @param data
    *          The connection's data.
-   * @param previous
-   *          The URL for the previous page of data, or {@code null} if there is
-   *          none.
-   * @param next
-   *          The URL for the next page of data, or {@code null} if there is
-   *          none.
+   * @param hasPrevious
+   *          Is there a previous page of data?
+   * @param hasNext
+   *          Is there a next page of data?
    */
-  Connection(List<T> data, String previous, String next) {
+  Connection(List<T> data, boolean hasPrevious, boolean hasNext) {
     this.data =
         Collections.unmodifiableList(data == null ? new ArrayList<T>() : data);
-    this.previous = previous;
-    this.next = next;
+    this.hasPrevious = hasPrevious;
+    this.hasNext = hasNext;
   }
 
   /**
@@ -64,7 +59,8 @@ public class Connection<T> {
    */
   @Override
   public String toString() {
-    return ReflectionUtils.toString(this);
+    return String.format("%s[data=%s hasPrevious=%s hasNext=%s]", getClass()
+      .getSimpleName(), getData(), hasPrevious(), hasNext());
   }
 
   /**
@@ -72,7 +68,16 @@ public class Connection<T> {
    */
   @Override
   public boolean equals(Object object) {
-    return ReflectionUtils.equals(this, object);
+    if (object == null)
+      return false;
+    if (!(object instanceof Connection<?>))
+      return false;
+
+    Connection<?> otherConnection = (Connection<?>) object;
+
+    return otherConnection.hasNext() == hasNext()
+        && otherConnection.hasPrevious == hasPrevious()
+        && otherConnection.getData().equals(getData());
   }
 
   /**
@@ -80,7 +85,11 @@ public class Connection<T> {
    */
   @Override
   public int hashCode() {
-    return ReflectionUtils.hashCode(this);
+    int hashCode = super.hashCode();
+    hashCode += 17 * getData().hashCode();
+    hashCode += 43 * Boolean.valueOf(hasPrevious()).hashCode();
+    hashCode += 71 * Boolean.valueOf(hasNext()).hashCode();
+    return hashCode;
   }
 
   /**
@@ -93,33 +102,13 @@ public class Connection<T> {
   }
 
   /**
-   * This connection's "previous page of data" URL.
-   * 
-   * @return This connection's "previous page of data" URL, or {@code null} if
-   *         there is no previous page.
-   */
-  public String getPrevious() {
-    return previous;
-  }
-
-  /**
-   * This connection's "next page of data" URL.
-   * 
-   * @return This connection's "next page of data" URL, or {@code null} if there
-   *         is no next page.
-   */
-  public String getNext() {
-    return next;
-  }
-
-  /**
    * Does this connection have a previous page of data?
    * 
    * @return {@code true} if there is a previous page of data for this
    *         connection, {@code false} otherwise.
    */
   public boolean hasPrevious() {
-    return !StringUtils.isBlank(getPrevious());
+    return hasPrevious;
   }
 
   /**
@@ -129,6 +118,6 @@ public class Connection<T> {
    *         {@code false} otherwise.
    */
   public boolean hasNext() {
-    return !StringUtils.isBlank(getNext());
+    return hasNext;
   }
 }

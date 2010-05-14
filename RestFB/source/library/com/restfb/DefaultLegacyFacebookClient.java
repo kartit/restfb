@@ -34,7 +34,6 @@ import java.util.TreeMap;
 import java.util.Map.Entry;
 
 import com.restfb.WebRequestor.Response;
-import com.restfb.util.StringUtils;
 
 /**
  * Default implementation of a <a
@@ -85,6 +84,9 @@ public class DefaultLegacyFacebookClient extends BaseFacebookClient implements
   private static final String SESSION_KEY_PARAM_NAME = "session_key";
   private static final String VERSION_PARAM_NAME = "v";
   private static final String VERSION_PARAM_VALUE = "1.0";
+
+  // Special OAuth access token parameter name.
+  private static final String ACCESS_TOKEN_PARAM_NAME = "access_token";
 
   /**
    * Creates a Facebook API client with the given <a
@@ -354,20 +356,8 @@ public class DefaultLegacyFacebookClient extends BaseFacebookClient implements
       throw new FacebookNetworkException("Facebook POST failed", t);
     }
 
-    /* if[JUL] */
-    if (julLogger.isLoggable(java.util.logging.Level.INFO))
-      julLogger.info("Facebook responded with " + response);
-    /* end[JUL] */
-
-    /* if[LOG4J] */
-    if (log4jLogger.isInfoEnabled())
-      log4jLogger.info("Facebook responded with " + response);
-    /* end[LOG4J] */
-
-    /* if[JCL] */
-    if (jclLogger.isInfoEnabled())
-      jclLogger.info("Facebook responded with " + response);
-    /* end[JCL] */
+    if (logger.isInfoEnabled())
+      logger.info("Facebook responded with " + response);
 
     // If we get any HTTP response code other than a 200 OK, throw an exception
     if (HTTP_OK != response.getStatusCode())

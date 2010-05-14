@@ -28,8 +28,6 @@ import java.util.Date;
 import java.util.List;
 
 import com.restfb.Facebook;
-import com.restfb.util.DateUtils;
-import com.restfb.util.ReflectionUtils;
 
 /**
  * Represents the <a
@@ -109,9 +107,6 @@ public class Post extends NamedFacebookType {
     @Facebook
     private String networks;
 
-    @Facebook
-    private String deny;
-
     /**
      * @see java.lang.Object#hashCode()
      */
@@ -170,15 +165,6 @@ public class Post extends NamedFacebookType {
      */
     public String getNetworks() {
       return networks;
-    }
-
-    /**
-     * The privacy "deny" restriction.
-     * 
-     * @return The privacy "deny" restriction.
-     */
-    public String getDeny() {
-      return deny;
     }
   }
 
@@ -348,7 +334,7 @@ public class Post extends NamedFacebookType {
    * @return The time the post was initially published.
    */
   public Date getCreatedTime() {
-    return DateUtils.toDateFromLongFormat(createdTime);
+    return StringUtils.toDate(createdTime);
   }
 
   /**
@@ -357,7 +343,7 @@ public class Post extends NamedFacebookType {
    * @return The time of the last comment on this post.
    */
   public Date getUpdatedTime() {
-    return DateUtils.toDateFromLongFormat(updatedTime);
+    return StringUtils.toDate(updatedTime);
   }
 
   /**

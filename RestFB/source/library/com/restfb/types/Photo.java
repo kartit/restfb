@@ -28,8 +28,6 @@ import java.util.Date;
 import java.util.List;
 
 import com.restfb.Facebook;
-import com.restfb.util.DateUtils;
-import com.restfb.util.ReflectionUtils;
 
 /**
  * Represents the <a
@@ -160,7 +158,7 @@ public class Photo extends NamedFacebookType {
      * @return Date this tag was created.
      */
     public Date getCreatedTime() {
-      return DateUtils.toDateFromLongFormat(createdTime);
+      return StringUtils.toDate(createdTime);
     }
   }
 
@@ -234,7 +232,7 @@ public class Photo extends NamedFacebookType {
    * @return The time the photo was initially published.
    */
   public Date getCreatedTime() {
-    return DateUtils.toDateFromLongFormat(createdTime);
+    return StringUtils.toDate(createdTime);
   }
 
   /**
@@ -243,7 +241,7 @@ public class Photo extends NamedFacebookType {
    * @return The last time the photo or its caption was updated.
    */
   public Date getUpdatedTime() {
-    return DateUtils.toDateFromLongFormat(updatedTime);
+    return StringUtils.toDate(updatedTime);
   }
 
   /**

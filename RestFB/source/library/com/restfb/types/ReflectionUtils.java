@@ -20,10 +20,8 @@
  * THE SOFTWARE.
  */
 
-package com.restfb.util;
+package com.restfb.types;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,77 +31,16 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * A collection of reflection-related utility methods.
+ * Reflection-related utility methods.
  * 
  * @author <a href="http://restfb.com">Mark Allen</a>
- * @since 1.6
+ * @since 1.5
  */
-public final class ReflectionUtils {
+abstract class ReflectionUtils {
   /**
    * Prevents instantiation.
    */
   private ReflectionUtils() {}
-
-  /**
-   * Is the given {@code object} a primitive type or wrapper for a primitive
-   * type?
-   * 
-   * @param object
-   *          The object to check for primitive-ness.
-   * @return {@code true} if {@code object} is a primitive type or wrapper for a
-   *         primitive type, {@code false} otherwise.
-   */
-  public static boolean isPrimitive(Object object) {
-    if (object == null)
-      return false;
-
-    Class<?> type = object.getClass();
-
-    return object instanceof String
-        || (object instanceof Integer || Integer.TYPE.equals(type))
-        || (object instanceof Boolean || Boolean.TYPE.equals(type))
-        || (object instanceof Long || Long.TYPE.equals(type))
-        || (object instanceof Double || Double.TYPE.equals(type))
-        || (object instanceof Float || Float.TYPE.equals(type))
-        || (object instanceof Byte || Byte.TYPE.equals(type))
-        || (object instanceof Short || Short.TYPE.equals(type))
-        || (object instanceof Character || Character.TYPE.equals(type));
-  }
-
-  /**
-   * Finds fields on the given {@code type} and all of its superclasses
-   * annotated with annotations of type {@code annotationType}.
-   * 
-   * @param <T>
-   *          The annotation type.
-   * @param type
-   *          The target type token.
-   * @param annotationType
-   *          The annotation type token.
-   * @return A list of field/annotation pairs.
-   */
-  public static <T extends Annotation> List<FieldWithAnnotation<T>> findFieldsWithAnnotation(
-      Class<?> type, Class<T> annotationType) {
-    // TODO: cache off results per type instead of reflecting every time
-
-    List<FieldWithAnnotation<T>> fieldsWithAnnotation =
-        new ArrayList<FieldWithAnnotation<T>>();
-
-    // Walk all superclasses looking for annotated fields until we hit
-    // Object
-    while (!Object.class.equals(type)) {
-      for (Field field : type.getDeclaredFields()) {
-        T annotation = field.getAnnotation(annotationType);
-        if (annotation != null)
-          fieldsWithAnnotation
-            .add(new FieldWithAnnotation<T>(field, annotation));
-      }
-
-      type = type.getSuperclass();
-    }
-
-    return Collections.unmodifiableList(fieldsWithAnnotation);
-  }
 
   /**
    * Gets all accessor methods for the given {@code clazz}.
@@ -112,7 +49,7 @@ public final class ReflectionUtils {
    *          The class for which accessors are extracted.
    * @return All accessor methods for the given {@code clazz}.
    */
-  public static List<Method> getAccessors(Class<?> clazz) {
+  static List<Method> getAccessors(Class<?> clazz) {
     if (clazz == null)
       throw new IllegalArgumentException(
         "The 'clazz' parameter cannot be null.");
@@ -155,7 +92,7 @@ public final class ReflectionUtils {
    * @throws IllegalStateException
    *           If an error occurs while performing reflection operations.
    */
-  public static String toString(Object object) {
+  static String toString(Object object) {
     StringBuilder buffer = new StringBuilder(object.getClass().getSimpleName());
     buffer.append("[");
 
@@ -198,7 +135,7 @@ public final class ReflectionUtils {
    * @throws IllegalStateException
    *           If an error occurs while performing reflection operations.
    */
-  public static int hashCode(Object object) {
+  static int hashCode(Object object) {
     if (object == null)
       return 0;
 
@@ -229,7 +166,7 @@ public final class ReflectionUtils {
    * @throws IllegalStateException
    *           If an error occurs while performing reflection operations.
    */
-  public static boolean equals(Object object1, Object object2) {
+  static boolean equals(Object object1, Object object2) {
     if (object1 == null && object2 == null)
       return true;
     if (!(object1 != null && object2 != null))
@@ -262,62 +199,5 @@ public final class ReflectionUtils {
     }
 
     return true;
-  }
-
-  /**
-   * A field/annotation pair.
-   * 
-   * @author <a href="http://restfb.com">Mark Allen</a>
-   */
-  public static class FieldWithAnnotation<T extends Annotation> {
-    /**
-     * A field.
-     */
-    private Field field;
-
-    /**
-     * An annotation on the field.
-     */
-    private T annotation;
-
-    /**
-     * Creates a field/annotation pair.
-     * 
-     * @param field
-     *          A field.
-     * @param annotation
-     *          An annotation on the field.
-     */
-    public FieldWithAnnotation(Field field, T annotation) {
-      this.field = field;
-      this.annotation = annotation;
-    }
-
-    /**
-     * Gets the field.
-     * 
-     * @return The field.
-     */
-    public Field getField() {
-      return field;
-    }
-
-    /**
-     * Gets the annotation on the field.
-     * 
-     * @return The annotation on the field.
-     */
-    public T getAnnotation() {
-      return annotation;
-    }
-
-    /**
-     * @see java.lang.Object#toString()
-     */
-    @Override
-    public String toString() {
-      return String.format("Field %s.%s (%s): %s", field.getDeclaringClass()
-        .getName(), field.getName(), field.getType(), annotation);
-    }
   }
 }

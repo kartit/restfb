@@ -23,8 +23,6 @@
 package com.restfb.types;
 
 import com.restfb.Facebook;
-import com.restfb.util.ReflectionUtils;
-import com.restfb.util.StringUtils;
 
 /**
  * Base class which encapsulates behavior and properties common to most <a
@@ -252,7 +250,7 @@ public class FacebookType {
        *         false} otherwise.
        */
       public Boolean hasHome() {
-        return !StringUtils.isBlank(home);
+        return toBoolean(home);
       }
 
       /**
@@ -262,7 +260,7 @@ public class FacebookType {
        *         false} otherwise.
        */
       public Boolean hasFeed() {
-        return !StringUtils.isBlank(feed);
+        return toBoolean(feed);
       }
 
       /**
@@ -272,7 +270,7 @@ public class FacebookType {
        *         false} otherwise.
        */
       public Boolean hasFriends() {
-        return !StringUtils.isBlank(friends);
+        return toBoolean(friends);
       }
 
       /**
@@ -282,7 +280,7 @@ public class FacebookType {
        *         false} otherwise.
        */
       public Boolean hasFamily() {
-        return !StringUtils.isBlank(family);
+        return toBoolean(family);
       }
 
       /**
@@ -292,7 +290,7 @@ public class FacebookType {
        *         {@code false} otherwise.
        */
       public Boolean hasActivities() {
-        return !StringUtils.isBlank(activities);
+        return toBoolean(activities);
       }
 
       /**
@@ -302,7 +300,7 @@ public class FacebookType {
        *         {@code false} otherwise.
        */
       public Boolean hasInterests() {
-        return !StringUtils.isBlank(interests);
+        return toBoolean(interests);
       }
 
       /**
@@ -312,7 +310,7 @@ public class FacebookType {
        *         false} otherwise.
        */
       public Boolean hasMusic() {
-        return !StringUtils.isBlank(music);
+        return toBoolean(music);
       }
 
       /**
@@ -322,7 +320,7 @@ public class FacebookType {
        *         false} otherwise.
        */
       public Boolean hasBooks() {
-        return !StringUtils.isBlank(books);
+        return toBoolean(books);
       }
 
       /**
@@ -332,7 +330,7 @@ public class FacebookType {
        *         false} otherwise.
        */
       public Boolean hasMovies() {
-        return !StringUtils.isBlank(movies);
+        return toBoolean(movies);
       }
 
       /**
@@ -342,7 +340,7 @@ public class FacebookType {
        *         {@code false} otherwise.
        */
       public Boolean hasTelevision() {
-        return !StringUtils.isBlank(television);
+        return toBoolean(television);
       }
 
       /**
@@ -352,7 +350,7 @@ public class FacebookType {
        *         false} otherwise.
        */
       public Boolean hasLikes() {
-        return !StringUtils.isBlank(likes);
+        return toBoolean(likes);
       }
 
       /**
@@ -362,7 +360,7 @@ public class FacebookType {
        *         false} otherwise.
        */
       public Boolean hasPosts() {
-        return !StringUtils.isBlank(posts);
+        return toBoolean(posts);
       }
 
       /**
@@ -372,7 +370,7 @@ public class FacebookType {
        *         false} otherwise.
        */
       public Boolean hasTagged() {
-        return !StringUtils.isBlank(tagged);
+        return toBoolean(tagged);
       }
 
       /**
@@ -382,7 +380,7 @@ public class FacebookType {
        *         {@code false} otherwise.
        */
       public Boolean hasStatuses() {
-        return !StringUtils.isBlank(statuses);
+        return toBoolean(statuses);
       }
 
       /**
@@ -392,7 +390,7 @@ public class FacebookType {
        *         false} otherwise.
        */
       public Boolean hasLinks() {
-        return !StringUtils.isBlank(links);
+        return toBoolean(links);
       }
 
       /**
@@ -402,7 +400,7 @@ public class FacebookType {
        *         false} otherwise.
        */
       public Boolean hasNotes() {
-        return !StringUtils.isBlank(notes);
+        return toBoolean(notes);
       }
 
       /**
@@ -412,7 +410,7 @@ public class FacebookType {
        *         false} otherwise.
        */
       public Boolean hasPhotos() {
-        return !StringUtils.isBlank(photos);
+        return toBoolean(photos);
       }
 
       /**
@@ -422,7 +420,7 @@ public class FacebookType {
        *         false} otherwise.
        */
       public Boolean hasAlbums() {
-        return !StringUtils.isBlank(albums);
+        return toBoolean(albums);
       }
 
       /**
@@ -432,7 +430,7 @@ public class FacebookType {
        *         false} otherwise.
        */
       public Boolean hasEvents() {
-        return !StringUtils.isBlank(events);
+        return toBoolean(events);
       }
 
       /**
@@ -442,7 +440,7 @@ public class FacebookType {
        *         false} otherwise.
        */
       public Boolean hasGroups() {
-        return !StringUtils.isBlank(groups);
+        return toBoolean(groups);
       }
 
       /**
@@ -452,7 +450,7 @@ public class FacebookType {
        *         false} otherwise.
        */
       public Boolean hasVideos() {
-        return !StringUtils.isBlank(videos);
+        return toBoolean(videos);
       }
 
       /**
@@ -462,7 +460,7 @@ public class FacebookType {
        *         false} otherwise.
        */
       public Boolean hasPicture() {
-        return !StringUtils.isBlank(picture);
+        return toBoolean(picture);
       }
 
       /**
@@ -472,7 +470,7 @@ public class FacebookType {
        *         false} otherwise.
        */
       public Boolean hasInbox() {
-        return !StringUtils.isBlank(inbox);
+        return toBoolean(inbox);
       }
 
       /**
@@ -482,7 +480,7 @@ public class FacebookType {
        *         false} otherwise.
        */
       public Boolean hasOutbox() {
-        return !StringUtils.isBlank(outbox);
+        return toBoolean(outbox);
       }
 
       /**
@@ -492,257 +490,7 @@ public class FacebookType {
        *         {@code false} otherwise.
        */
       public Boolean hasUpdates() {
-        return !StringUtils.isBlank(updates);
-      }
-
-      /**
-       * This object's 'home' connection URL.
-       * 
-       * @return This object's 'home' connection URL, or {@code null} if it
-       *         doesn't have one.
-       */
-      public String getHome() {
-        return home;
-      }
-
-      /**
-       * This object's 'feed' connection URL.
-       * 
-       * @return This object's 'feed' connection URL, or {@code null} if it
-       *         doesn't have one.
-       */
-      public String getFeed() {
-        return feed;
-      }
-
-      /**
-       * This object's 'friends' connection URL.
-       * 
-       * @return This object's 'friends' connection URL, or {@code null} if it
-       *         doesn't have one.
-       */
-      public String getFriends() {
-        return friends;
-      }
-
-      /**
-       * This object's 'family' connection URL.
-       * 
-       * @return This object's 'family' connection URL, or {@code null} if it
-       *         doesn't have one.
-       */
-      public String getFamily() {
-        return family;
-      }
-
-      /**
-       * This object's 'activities' connection URL.
-       * 
-       * @return This object's 'activities' connection URL, or {@code null} if
-       *         it doesn't have one.
-       */
-      public String getActivities() {
-        return activities;
-      }
-
-      /**
-       * This object's 'interests' connection URL.
-       * 
-       * @return This object's 'interests' connection URL, or {@code null} if it
-       *         doesn't have one.
-       */
-      public String getInterests() {
-        return interests;
-      }
-
-      /**
-       * This object's 'music' connection URL.
-       * 
-       * @return This object's 'music' connection URL, or {@code null} if it
-       *         doesn't have one.
-       */
-      public String getMusic() {
-        return music;
-      }
-
-      /**
-       * This object's 'books' connection URL.
-       * 
-       * @return This object's 'books' connection URL, or {@code null} if it
-       *         doesn't have one.
-       */
-      public String getBooks() {
-        return books;
-      }
-
-      /**
-       * This object's 'movies' connection URL.
-       * 
-       * @return This object's 'movies' connection URL, or {@code null} if it
-       *         doesn't have one.
-       */
-      public String getMovies() {
-        return movies;
-      }
-
-      /**
-       * This object's 'television' connection URL.
-       * 
-       * @return This object's 'television' connection URL, or {@code null} if
-       *         it doesn't have one.
-       */
-      public String getTelevision() {
-        return television;
-      }
-
-      /**
-       * This object's 'likes' connection URL.
-       * 
-       * @return This object's 'likes' connection URL, or {@code null} if it
-       *         doesn't have one.
-       */
-      public String getLikes() {
-        return likes;
-      }
-
-      /**
-       * This object's 'posts' connection URL.
-       * 
-       * @return This object's 'posts' connection URL, or {@code null} if it
-       *         doesn't have one.
-       */
-      public String getPosts() {
-        return posts;
-      }
-
-      /**
-       * This object's 'tagged' connection URL.
-       * 
-       * @return This object's 'tagged' connection URL, or {@code null} if it
-       *         doesn't have one.
-       */
-      public String getTagged() {
-        return tagged;
-      }
-
-      /**
-       * This object's 'statuses' connection URL.
-       * 
-       * @return This object's 'statuses' connection URL, or {@code null} if it
-       *         doesn't have one.
-       */
-      public String getStatuses() {
-        return statuses;
-      }
-
-      /**
-       * This object's 'links' connection URL.
-       * 
-       * @return This object's 'links' connection URL, or {@code null} if it
-       *         doesn't have one.
-       */
-      public String getLinks() {
-        return links;
-      }
-
-      /**
-       * This object's 'notes' connection URL.
-       * 
-       * @return This object's 'notes' connection URL, or {@code null} if it
-       *         doesn't have one.
-       */
-      public String getNotes() {
-        return notes;
-      }
-
-      /**
-       * This object's 'photos' connection URL.
-       * 
-       * @return This object's 'photos' connection URL, or {@code null} if it
-       *         doesn't have one.
-       */
-      public String getPhotos() {
-        return photos;
-      }
-
-      /**
-       * This object's 'albums' connection URL.
-       * 
-       * @return This object's 'albums' connection URL, or {@code null} if it
-       *         doesn't have one.
-       */
-      public String getAlbums() {
-        return albums;
-      }
-
-      /**
-       * This object's 'events' connection URL.
-       * 
-       * @return This object's 'events' connection URL, or {@code null} if it
-       *         doesn't have one.
-       */
-      public String getEvents() {
-        return events;
-      }
-
-      /**
-       * This object's 'groups' connection URL.
-       * 
-       * @return This object's 'groups' connection URL, or {@code null} if it
-       *         doesn't have one.
-       */
-      public String getGroups() {
-        return groups;
-      }
-
-      /**
-       * This object's 'videos' connection URL.
-       * 
-       * @return This object's 'videos' connection URL, or {@code null} if it
-       *         doesn't have one.
-       */
-      public String getVideos() {
-        return videos;
-      }
-
-      /**
-       * This object's 'picture' connection URL.
-       * 
-       * @return This object's 'picture' connection URL, or {@code null} if it
-       *         doesn't have one.
-       */
-      public String getPicture() {
-        return picture;
-      }
-
-      /**
-       * This object's 'inbox' connection URL.
-       * 
-       * @return This object's 'inbox' connection URL, or {@code null} if it
-       *         doesn't have one.
-       */
-      public String getInbox() {
-        return inbox;
-      }
-
-      /**
-       * This object's 'outbox' connection URL.
-       * 
-       * @return This object's 'outbox' connection URL, or {@code null} if it
-       *         doesn't have one.
-       */
-      public String getOutbox() {
-        return outbox;
-      }
-
-      /**
-       * This object's 'updates' connection URL.
-       * 
-       * @return This object's 'updates' connection URL, or {@code null} if it
-       *         doesn't have one.
-       */
-      public String getUpdates() {
-        return updates;
+        return toBoolean(updates);
       }
     }
 
@@ -754,5 +502,18 @@ public class FacebookType {
     public Connections getConnections() {
       return connections;
     }
+  }
+
+  /**
+   * Returns {@code true} if {@code string} is not blank, {@code false}
+   * otherwise.
+   * 
+   * @param string
+   *          The string to check.
+   * @return {@code true} if {@code string} is not blank, {@code false}
+   *         otherwise.
+   */
+  private static Boolean toBoolean(String string) {
+    return string != null && !"".equals(string.trim());
   }
 }

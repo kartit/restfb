@@ -25,8 +25,6 @@ package com.restfb;
 import java.io.IOException;
 import java.io.InputStream;
 
-import com.restfb.util.StringUtils;
-
 /**
  * Specifies how a class that sends {@code HTTP} requests to the Facebook API
  * endpoint must operate.

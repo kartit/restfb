@@ -21,7 +21,7 @@
 			<include name="**/*.jar" />
 		</fileset>
 		<fileset dir="../../">
-			<include name="restfb-jul-*.jar" />
+			<include name="restfb-*.jar" />
 		</fileset>
 	</path>
 

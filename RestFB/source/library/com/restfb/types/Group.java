@@ -25,7 +25,6 @@ package com.restfb.types;
 import java.util.Date;
 
 import com.restfb.Facebook;
-import com.restfb.util.DateUtils;
 
 /**
  * Represents the <a
@@ -107,6 +106,6 @@ public class Group extends NamedFacebookType {
    * @return The last time the group was updated.
    */
   public Date getUpdatedTime() {
-    return DateUtils.toDateFromLongFormat(updatedTime);
+    return StringUtils.toDate(updatedTime);
   }
 }

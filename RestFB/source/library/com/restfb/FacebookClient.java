@@ -101,23 +101,6 @@ public interface FacebookClient {
       Parameter... parameters) throws FacebookException;
 
   /**
-   * Fetches multiple <a
-   * href="http://developers.facebook.com/docs/reference/api/">Graph API
-   * objects</a> in a single call and returns them as a {@link java.util.Map}.
-   * 
-   * @param ids
-   *          IDs of the objects to fetch, e.g. {@code "me", "arjun"}.
-   * @param parameters
-   *          URL parameters to include in the API call (optional).
-   * @return A mapping of Graph API object IDs to Graph API objects.
-   * @throws FacebookException
-   *           If an error occurs while performing the API call.
-   * @since 1.6
-   */
-  Map<String, Object> fetchObjects(List<String> ids, Parameter... parameters)
-      throws FacebookException;
-
-  /**
    * Fetches a Graph API {@code Connection} type.
    * 
    * @param <T>

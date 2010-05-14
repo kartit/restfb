@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.restfb.WebRequestor.Response;
-import com.restfb.util.StringUtils;
 
 /**
  * Default implementation of a <a
@@ -59,6 +58,11 @@ public class DefaultFacebookClient extends BaseFacebookClient implements
    */
   private static final String FACEBOOK_LEGACY_ENDPOINT_URL =
       "https://api.facebook.com/method";
+
+  /**
+   * Reserved access token parameter name.
+   */
+  private static final String ACCESS_TOKEN_PARAM_NAME = "access_token";
 
   /**
    * Reserved method override parameter name.
@@ -166,8 +170,8 @@ public class DefaultFacebookClient extends BaseFacebookClient implements
     verifyParameterPresence("connectionType", connectionType);
 
     List<T> data = new ArrayList<T>();
-    String previous = null;
-    String next = null;
+    boolean hasPrevious = false;
+    boolean hasNext = false;
 
     try {
       JSONObject jsonObject =
@@ -182,17 +186,15 @@ public class DefaultFacebookClient extends BaseFacebookClient implements
       // Pull out paging info, if present
       if (jsonObject.has("paging")) {
         JSONObject jsonPaging = jsonObject.getJSONObject("paging");
-        previous =
-            jsonPaging.has("previous") ? jsonPaging.getString("previous")
-                : null;
-        next = jsonPaging.has("next") ? jsonPaging.getString("next") : null;
+        hasPrevious = jsonPaging.has("previous");
+        hasNext = jsonPaging.has("next");
       }
     } catch (JSONException e) {
       throw new FacebookJsonMappingException(
         "Unable to map connection JSON to Java objects", e);
     }
 
-    return new Connection<T>(data, previous, next);
+    return new Connection<T>(data, hasPrevious, hasNext);
   }
 
   /**
@@ -245,39 +247,6 @@ public class DefaultFacebookClient extends BaseFacebookClient implements
       throw new FacebookJsonMappingException(
         "Unable to map connection JSON to Java objects", e);
     }
-  }
-
-  /**
-   * @see com.restfb.FacebookClient#fetchObjects(java.util.List,
-   *      com.restfb.Parameter[])
-   */
-  @Override
-  public Map<String, Object> fetchObjects(List<String> ids,
-      Parameter... parameters) throws FacebookException {
-    verifyParameterPresence("ids", ids);
-
-    if (ids.size() == 0)
-      throw new IllegalArgumentException("The list of IDs cannot be empty.");
-
-    for (Parameter parameter : parameters)
-      if (IDS_PARAM_NAME.equals(parameter.name))
-        throw new IllegalArgumentException("You cannot specify the '"
-            + IDS_PARAM_NAME + "' URL parameter yourself - "
-            + "RestFB will populate this for you with "
-            + "the list of IDs you passed to this method.");
-
-    // Normalize the IDs
-    for (int i = 0; i < ids.size(); i++) {
-      String id = ids.get(i).trim().toLowerCase();
-      if ("".equals(id))
-        throw new IllegalArgumentException(
-          "The list of IDs cannot contain blank strings.");
-      ids.set(i, id);
-    }
-
-    return jsonMapper.toJavaMap(makeRequest("",
-      parametersWithAdditionalParameter(Parameter.with(IDS_PARAM_NAME,
-        StringUtils.join(ids)), parameters)));
   }
 
   /**
@@ -447,20 +416,8 @@ public class DefaultFacebookClient extends BaseFacebookClient implements
       throw new FacebookNetworkException("Facebook " + httpVerb + " failed", t);
     }
 
-    /* if[JUL] */
-    if (julLogger.isLoggable(java.util.logging.Level.INFO))
-      julLogger.info("Facebook responded with " + response);
-    /* end[JUL] */
-
-    /* if[LOG4J] */
-    if (log4jLogger.isInfoEnabled())
-      log4jLogger.info("Facebook responded with " + response);
-    /* end[LOG4J] */
-
-    /* if[JCL] */
-    if (jclLogger.isInfoEnabled())
-      jclLogger.info("Facebook responded with " + response);
-    /* end[JCL] */
+    if (logger.isInfoEnabled())
+      logger.info("Facebook responded with " + response);
 
     // If we get any HTTP response code other than a 200 OK or 401 Not
     // Authorized or 500 Internal Server Error, throw an exception. We handle
