@@ -86,7 +86,7 @@ public class DefaultLegacyFacebookClient extends BaseFacebookClient implements
   private static final String VERSION_PARAM_VALUE = "1.0";
 
   // Special OAuth access token parameter name.
-  private static final String ACCESS_TOKEN_PARAM_NAME = "token";
+  private static final String ACCESS_TOKEN_PARAM_NAME = "access_token";
 
   /**
    * Creates a Facebook API client with the given <a
