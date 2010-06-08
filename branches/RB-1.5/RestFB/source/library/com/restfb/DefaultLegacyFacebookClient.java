@@ -85,9 +85,6 @@ public class DefaultLegacyFacebookClient extends BaseFacebookClient implements
   private static final String VERSION_PARAM_NAME = "v";
   private static final String VERSION_PARAM_VALUE = "1.0";
 
-  // Special OAuth access token parameter name.
-  private static final String ACCESS_TOKEN_PARAM_NAME = "access_token";
-
   /**
    * Creates a Facebook API client with the given <a
    * href="http://developers.facebook.com/docs/guides/upgrade#oauth">OAuth
@@ -429,7 +426,10 @@ public class DefaultLegacyFacebookClient extends BaseFacebookClient implements
 
       parameterStringBuilder.append(StringUtils.urlEncode(entry.getKey()));
       parameterStringBuilder.append("=");
-      parameterStringBuilder.append(StringUtils.urlEncode(entry.getValue()));
+      parameterStringBuilder
+        .append(usesAccessTokenAuthentication() ? urlEncodedValueForParameterName(
+          entry.getKey(), entry.getValue())
+            : StringUtils.urlEncode(entry.getValue()));
     }
 
     return parameterStringBuilder.toString();

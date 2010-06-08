@@ -60,11 +60,6 @@ public class DefaultFacebookClient extends BaseFacebookClient implements
       "https://api.facebook.com/method";
 
   /**
-   * Reserved access token parameter name.
-   */
-  private static final String ACCESS_TOKEN_PARAM_NAME = "access_token";
-
-  /**
    * Reserved method override parameter name.
    */
   private static final String METHOD_PARAM_NAME = "method";
@@ -534,7 +529,8 @@ public class DefaultFacebookClient extends BaseFacebookClient implements
 
       parameterStringBuilder.append(StringUtils.urlEncode(parameter.name));
       parameterStringBuilder.append("=");
-      parameterStringBuilder.append(StringUtils.urlEncode(parameter.value));
+      parameterStringBuilder.append(urlEncodedValueForParameterName(
+        parameter.name, parameter.value));
     }
 
     return parameterStringBuilder.toString();
