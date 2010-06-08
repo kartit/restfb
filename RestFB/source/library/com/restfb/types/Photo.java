@@ -76,13 +76,7 @@ public class Photo extends NamedFacebookType {
    * @author <a href="http://restfb.com">Mark Allen</a>
    * @since 1.5
    */
-  public static class Tag {
-    @Facebook
-    private Integer id;
-
-    @Facebook
-    private Integer name;
-
+  public static class Tag extends NamedFacebookType {
     @Facebook
     private Integer x;
 
@@ -91,48 +85,6 @@ public class Photo extends NamedFacebookType {
 
     @Facebook("created_time")
     private String createdTime;
-
-    /**
-     * @see java.lang.Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
-      return ReflectionUtils.hashCode(this);
-    }
-
-    /**
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(Object that) {
-      return ReflectionUtils.equals(this, that);
-    }
-
-    /**
-     * @see java.lang.Object#toString()
-     */
-    @Override
-    public String toString() {
-      return ReflectionUtils.toString(this);
-    }
-
-    /**
-     * ID of the tagged user.
-     * 
-     * @return ID of the tagged user.
-     */
-    public Integer getId() {
-      return id;
-    }
-
-    /**
-     * Name of the tagged user.
-     * 
-     * @return Name of the tagged user.
-     */
-    public Integer getName() {
-      return name;
-    }
 
     /**
      * X coordinate (as a percentage of distance from left vs. width).
