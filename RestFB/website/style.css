@@ -199,6 +199,15 @@ div.spacer {
 	font-weight: bold;
 }
 
+#facebook td {
+	vertical-align: middle;	
+}
+
+/*
+#facebook div:last-child {
+	display: none;	
+}*/
+
 /* end main */
 
 /* highlight */
