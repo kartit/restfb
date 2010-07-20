@@ -45,59 +45,59 @@ public class DefaultFacebookClient extends BaseFacebookClient implements
   /**
    * Graph API access token.
    */
-  private String accessToken;
+  protected String accessToken;
 
   /**
    * API endpoint URL.
    */
-  private static final String FACEBOOK_GRAPH_ENDPOINT_URL =
+  protected static final String FACEBOOK_GRAPH_ENDPOINT_URL =
       "https://graph.facebook.com";
 
   /**
    * Legacy API endpoint URL, used to support FQL queries.
    */
-  private static final String FACEBOOK_LEGACY_ENDPOINT_URL =
+  protected static final String FACEBOOK_LEGACY_ENDPOINT_URL =
       "https://api.facebook.com/method";
 
   /**
    * Reserved method override parameter name.
    */
-  private static final String METHOD_PARAM_NAME = "method";
+  protected static final String METHOD_PARAM_NAME = "method";
 
   /**
    * Reserved "multiple IDs" parameter name.
    */
-  private static final String IDS_PARAM_NAME = "ids";
+  protected static final String IDS_PARAM_NAME = "ids";
 
   /**
    * Reserved FQL query parameter name.
    */
-  private static final String QUERY_PARAM_NAME = "query";
+  protected static final String QUERY_PARAM_NAME = "query";
 
   /**
    * Reserved FQL multiquery parameter name.
    */
-  private static final String QUERIES_PARAM_NAME = "queries";
+  protected static final String QUERIES_PARAM_NAME = "queries";
 
   /**
    * Reserved "result format" parameter name.
    */
-  private static final String FORMAT_PARAM_NAME = "format";
+  protected static final String FORMAT_PARAM_NAME = "format";
 
   /**
    * API error response 'error' attribute name.
    */
-  private static final String ERROR_ATTRIBUTE_NAME = "error";
+  protected static final String ERROR_ATTRIBUTE_NAME = "error";
 
   /**
    * API error response 'type' attribute name.
    */
-  private static final String ERROR_TYPE_ATTRIBUTE_NAME = "type";
+  protected static final String ERROR_TYPE_ATTRIBUTE_NAME = "type";
 
   /**
    * API error response 'message' attribute name.
    */
-  private static final String ERROR_MESSAGE_ATTRIBUTE_NAME = "message";
+  protected static final String ERROR_MESSAGE_ATTRIBUTE_NAME = "message";
 
   /**
    * Creates a Facebook Graph API client with no access token.
@@ -238,8 +238,12 @@ public class DefaultFacebookClient extends BaseFacebookClient implements
 
     try {
       JSONObject jsonObject =
-          new JSONObject(makeRequest("", parametersWithAdditionalParameter(
-            Parameter.with(IDS_PARAM_NAME, StringUtils.join(ids)), parameters)));
+          new JSONObject(
+            makeRequest(
+              "",
+              parametersWithAdditionalParameter(
+                Parameter.with(IDS_PARAM_NAME, StringUtils.join(ids)),
+                parameters)));
       return jsonMapper.toJavaObject(jsonObject.toString(), objectType);
     } catch (JSONException e) {
       throw new FacebookJsonMappingException(
@@ -256,8 +260,10 @@ public class DefaultFacebookClient extends BaseFacebookClient implements
       InputStream binaryAttachment, Parameter... parameters)
       throws FacebookException {
     verifyParameterPresence("connection", connection);
-    return jsonMapper.toJavaObject(makeRequest(connection, false, true, false,
-      binaryAttachment, parameters), objectType);
+    return jsonMapper
+      .toJavaObject(
+        makeRequest(connection, false, true, false, binaryAttachment,
+          parameters), objectType);
   }
 
   /**
@@ -288,9 +294,15 @@ public class DefaultFacebookClient extends BaseFacebookClient implements
 
     try {
       JSONArray jsonArray =
-          new JSONArray(makeRequest("fql.multiquery", true, false, false, null,
-            parametersWithAdditionalParameter(Parameter.with(
-              QUERIES_PARAM_NAME, queriesToJson(queries)), parameters)));
+          new JSONArray(makeRequest(
+            "fql.multiquery",
+            true,
+            false,
+            false,
+            null,
+            parametersWithAdditionalParameter(
+              Parameter.with(QUERIES_PARAM_NAME, queriesToJson(queries)),
+              parameters)));
 
       JSONObject normalizedJson = new JSONObject();
 
@@ -330,9 +342,15 @@ public class DefaultFacebookClient extends BaseFacebookClient implements
             + "RestFB will populate this for you with "
             + "the query you passed to this method.");
 
-    return jsonMapper.toJavaList(makeRequest("fql.query", true, false, false,
-      null, parametersWithAdditionalParameter(Parameter.with(QUERY_PARAM_NAME,
-        query), parameters)), objectType);
+    return jsonMapper.toJavaList(
+      makeRequest(
+        "fql.query",
+        true,
+        false,
+        false,
+        null,
+        parametersWithAdditionalParameter(
+          Parameter.with(QUERY_PARAM_NAME, query), parameters)), objectType);
   }
 
   /**
@@ -364,14 +382,14 @@ public class DefaultFacebookClient extends BaseFacebookClient implements
    *          Should we hit the legacy endpoint ({@code true}) or the new Graph
    *          endpoint ({@code false})?
    * @param executeAsPost
-   *          {@code true} to execute the web request as a {@code POST}, {@code
-   *          false} to execute as a {@code GET}.
+   *          {@code true} to execute the web request as a {@code POST},
+   *          {@code false} to execute as a {@code GET}.
    * @param executeAsDelete
-   *          {@code true} to add a special 'treat this request as a {@code
-   *          DELETE}' parameter.
+   *          {@code true} to add a special 'treat this request as a
+   *          {@code DELETE}' parameter.
    * @param binaryAttachment
-   *          A binary file to include in a {@code POST} request. Pass {@code
-   *          null} if no attachment should be sent.
+   *          A binary file to include in a {@code POST} request. Pass
+   *          {@code null} if no attachment should be sent.
    * @param parameters
    *          Arbitrary number of parameters to send along to Facebook as part
    *          of the API call.
@@ -388,8 +406,8 @@ public class DefaultFacebookClient extends BaseFacebookClient implements
 
     if (executeAsDelete)
       parameters =
-          parametersWithAdditionalParameter(Parameter.with(METHOD_PARAM_NAME,
-            "delete"), parameters);
+          parametersWithAdditionalParameter(
+            Parameter.with(METHOD_PARAM_NAME, "delete"), parameters);
 
     StringUtils.trimToEmpty(endpoint).toLowerCase();
     if (!endpoint.startsWith("/"))
@@ -397,8 +415,7 @@ public class DefaultFacebookClient extends BaseFacebookClient implements
 
     String fullEndpoint =
         (useLegacyEndpoint ? FACEBOOK_LEGACY_ENDPOINT_URL
-            : FACEBOOK_GRAPH_ENDPOINT_URL)
-            + endpoint;
+            : FACEBOOK_GRAPH_ENDPOINT_URL) + endpoint;
 
     Response response = null;
     String parameterString = toParameterString(parameters);
@@ -488,9 +505,9 @@ public class DefaultFacebookClient extends BaseFacebookClient implements
       JSONObject innerErrorObject =
           errorObject.getJSONObject(ERROR_ATTRIBUTE_NAME);
 
-      throw new FacebookGraphException(innerErrorObject
-        .getString(ERROR_TYPE_ATTRIBUTE_NAME), innerErrorObject
-        .getString(ERROR_MESSAGE_ATTRIBUTE_NAME));
+      throw new FacebookGraphException(
+        innerErrorObject.getString(ERROR_TYPE_ATTRIBUTE_NAME),
+        innerErrorObject.getString(ERROR_MESSAGE_ATTRIBUTE_NAME));
     } catch (JSONException e) {
       throw new FacebookJsonMappingException(
         "Unable to process the Facebook API response", e);
@@ -511,12 +528,12 @@ public class DefaultFacebookClient extends BaseFacebookClient implements
 
     if (!StringUtils.isBlank(accessToken))
       parameters =
-          parametersWithAdditionalParameter(Parameter.with(
-            ACCESS_TOKEN_PARAM_NAME, accessToken), parameters);
+          parametersWithAdditionalParameter(
+            Parameter.with(ACCESS_TOKEN_PARAM_NAME, accessToken), parameters);
 
     parameters =
-        parametersWithAdditionalParameter(Parameter.with(FORMAT_PARAM_NAME,
-          "json"), parameters);
+        parametersWithAdditionalParameter(
+          Parameter.with(FORMAT_PARAM_NAME, "json"), parameters);
 
     StringBuilder parameterStringBuilder = new StringBuilder();
     boolean first = true;
