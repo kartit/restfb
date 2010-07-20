@@ -71,7 +71,7 @@ public class User extends NamedFacebookType {
   private String picture;
 
   @Facebook
-  private Integer timezone;
+  private Double timezone;
 
   @Facebook
   private Boolean verified;
@@ -403,7 +403,7 @@ public class User extends NamedFacebookType {
    * 
    * @return The user's timezone offset.
    */
-  public Integer getTimezone() {
+  public Double getTimezone() {
     return timezone;
   }
 
