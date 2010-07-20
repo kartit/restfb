@@ -154,6 +154,16 @@ public class DefaultJsonMapper implements JsonMapper {
       if ("null".equals(json))
         return null;
 
+      // Facebook will sometimes return the string "false" to mean null.
+      // Check for that and bail early if we find it.
+      if ("false".equals(json)) {
+        if (logger.isInfoEnabled())
+          logger
+            .info("Encountered 'false' from Facebook when trying to map to "
+                + type.getSimpleName() + " - mapping null instead.");
+        return null;
+      }
+
       JSONObject jsonObject = new JSONObject(json);
       T instance = null;
 
