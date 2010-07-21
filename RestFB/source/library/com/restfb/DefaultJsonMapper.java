@@ -461,6 +461,12 @@ public class DefaultJsonMapper implements JsonMapper {
 
     if (NamedFacebookType.class.isAssignableFrom(type)
         && rawValue.getClass().equals(String.class)) {
+      if (logger.isDebugEnabled())
+        logger.debug("Encountered the string '" + rawValueAsString
+            + "' but expected a " + NamedFacebookType.class.getSimpleName()
+            + " instead.  Working around that by coercing into a "
+            + NamedFacebookType.class.getSimpleName() + "...");
+
       JSONObject workaroundJsonObject = new JSONObject();
       workaroundJsonObject.put("name", rawValue);
       rawValueAsString = workaroundJsonObject.toString();
