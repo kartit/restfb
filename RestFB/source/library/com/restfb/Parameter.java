@@ -44,7 +44,7 @@ public final class Parameter {
   /**
    * Facebook date format (ISO 8601). Example: 2010-02-28T16:11:08+0000
    */
-  private static final String FACEBOOK_DATE_FORMAT = "yyyy-MM-dd'T'kk:mm:ssZ";
+  private static final String FACEBOOK_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
 
   /**
    * Creates a new parameter with the given {@code name} and {@code value}.
@@ -64,10 +64,6 @@ public final class Parameter {
     if (StringUtils.isBlank(name) || value == null || jsonMapper == null)
       throw new IllegalArgumentException(Parameter.class
           + " instances must have a non-blank name and non-null value.");
-
-    if (jsonMapper == null)
-      throw new IllegalArgumentException("Provided " + JsonMapper.class
-          + " must not be null.");
 
     this.name = StringUtils.trimToEmpty(name).toLowerCase();
 
