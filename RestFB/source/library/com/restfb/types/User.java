@@ -29,6 +29,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import com.restfb.Facebook;
 
 /**
@@ -114,6 +116,11 @@ public class User extends NamedFacebookType {
    * @author <a href="http://restfb.com">Mark Allen</a>
    */
   public static class Work {
+    /**
+     * Logger.
+     */
+    private static final Logger logger = Logger.getLogger(Work.class);
+
     // Facebook month-year only date format.
     // Example: 2007-03
     private static final String FACEBOOK_MONTH_YEAR_DATE_FORMAT = "yyyy-MM";
@@ -153,10 +160,11 @@ public class User extends NamedFacebookType {
         return new SimpleDateFormat(FACEBOOK_MONTH_YEAR_DATE_FORMAT)
           .parse(date);
       } catch (ParseException e) {
-        throw new IllegalArgumentException(
-          "Unable to parse date '" + date + "' using format string '"
-              + FACEBOOK_MONTH_YEAR_DATE_FORMAT + "'", e);
+        logger.warn("Unable to parse date '" + date + "' using format string '"
+            + FACEBOOK_MONTH_YEAR_DATE_FORMAT + "', mapping as null", e);
       }
+
+      return null;
     }
 
     /**
