@@ -35,6 +35,7 @@ import java.util.Map.Entry;
 import org.apache.log4j.Logger;
 
 import com.restfb.ReflectionUtils.FieldWithAnnotation;
+import com.restfb.types.NamedFacebookType;
 
 /**
  * Default implementation of a JSON-to-Java mapper.
@@ -446,8 +447,27 @@ public class DefaultJsonMapper implements JsonMapper {
       return toJavaList(rawValue.toString(), fieldWithAnnotation
         .getAnnotation().contains());
 
+    // Hack for issue 56 where FB will sometimes return things like
+    // "hometown":"Belgrade, Serbia"
+    // instead of
+    // "hometown":{"id":1234,"name":"Belgrade, Serbia"}.
+    //
+    // We look for this situation and turn the short form of the field into a
+    // full NamedFacebookType object.
+    //
+    // Will address this correctly in 1.6, this quick fix is good enough for
+    // 1.5.3. Thanks to ikabiljo for the bug report and workaround.
+    String rawValueAsString = rawValue.toString();
+
+    if (NamedFacebookType.class.isAssignableFrom(type)
+        && rawValue.getClass().equals(String.class)) {
+      JSONObject workaroundJsonObject = new JSONObject();
+      workaroundJsonObject.put("name", rawValue);
+      rawValueAsString = workaroundJsonObject.toString();
+    }
+
     // Some other type - recurse into it
-    return toJavaObject(rawValue.toString(), type);
+    return toJavaObject(rawValueAsString, type);
   }
 
   /**
