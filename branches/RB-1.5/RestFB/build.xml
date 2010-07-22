@@ -28,7 +28,7 @@
 	</path>
 
 	<!-- Other -->
-	<property name="libraryVersion" value="1.5.2" />
+	<property name="libraryVersion" value="1.5.3" />
 
 	<target name="compile" description="Compiles library code">
 		<mkdir dir="${antClassesDir}" />
