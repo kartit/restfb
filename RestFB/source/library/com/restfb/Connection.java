@@ -34,24 +34,26 @@ import java.util.List;
  */
 public class Connection<T> {
   private final List<T> data;
-  private final boolean hasPrevious;
-  private final boolean hasNext;
+  private final String previous;
+  private final String next;
 
   /**
-   * Creates a connection with the given data and previous/next flags.
+   * Creates a connection with the given data and previous/next URLs.
    * 
    * @param data
    *          The connection's data.
-   * @param hasPrevious
-   *          Is there a previous page of data?
-   * @param hasNext
-   *          Is there a next page of data?
+   * @param previous
+   *          The URL for the previous page of data, or {@code null} if there is
+   *          none.
+   * @param next
+   *          The URL for the next page of data, or {@code null} if there is
+   *          none.
    */
-  Connection(List<T> data, boolean hasPrevious, boolean hasNext) {
+  Connection(List<T> data, String previous, String next) {
     this.data =
         Collections.unmodifiableList(data == null ? new ArrayList<T>() : data);
-    this.hasPrevious = hasPrevious;
-    this.hasNext = hasNext;
+    this.previous = previous;
+    this.next = next;
   }
 
   /**
@@ -76,7 +78,7 @@ public class Connection<T> {
     Connection<?> otherConnection = (Connection<?>) object;
 
     return otherConnection.hasNext() == hasNext()
-        && otherConnection.hasPrevious == hasPrevious()
+        && otherConnection.hasPrevious() == hasPrevious()
         && otherConnection.getData().equals(getData());
   }
 
@@ -108,7 +110,7 @@ public class Connection<T> {
    *         connection, {@code false} otherwise.
    */
   public boolean hasPrevious() {
-    return hasPrevious;
+    return !StringUtils.isBlank(getPrevious());
   }
 
   /**
@@ -118,6 +120,28 @@ public class Connection<T> {
    *         {@code false} otherwise.
    */
   public boolean hasNext() {
-    return hasNext;
+    return !StringUtils.isBlank(getNext());
+  }
+
+  /**
+   * This connection's "previous page of data" URL.
+   * 
+   * @return This connection's "previous page of data" URL, or {@code null} if
+   *         there is no previous page.
+   * @since 1.5.3
+   */
+  public String getPrevious() {
+    return previous;
+  }
+
+  /**
+   * This connection's "next page of data" URL.
+   * 
+   * @return This connection's "next page of data" URL, or {@code null} if there
+   *         is no next page.
+   * @since 1.5.3
+   */
+  public String getNext() {
+    return next;
   }
 }
