@@ -36,6 +36,7 @@ import org.apache.log4j.Logger;
 
 import com.restfb.ReflectionUtils.FieldWithAnnotation;
 import com.restfb.types.NamedFacebookType;
+import com.restfb.types.Post.Comments;
 
 /**
  * Default implementation of a JSON-to-Java mapper.
@@ -469,6 +470,22 @@ public class DefaultJsonMapper implements JsonMapper {
 
       JSONObject workaroundJsonObject = new JSONObject();
       workaroundJsonObject.put("name", rawValue);
+      rawValueAsString = workaroundJsonObject.toString();
+    }
+
+    if (Comments.class.isAssignableFrom(type) && rawValue instanceof JSONArray) {
+      // Hack for issue 76 where FB will sometimes return a Post's Comments as
+      // "[]" instead of an object type (wtf)
+      if (logger.isDebugEnabled())
+        logger.debug("Encountered comment array '" + rawValueAsString
+            + "' but expected a " + Comments.class.getSimpleName()
+            + " object instead.  Working around that "
+            + "by coercing into an empty " + Comments.class.getSimpleName()
+            + " instance...");
+
+      JSONObject workaroundJsonObject = new JSONObject();
+      workaroundJsonObject.put("count", 0);
+      workaroundJsonObject.put("data", new JSONArray());
       rawValueAsString = workaroundJsonObject.toString();
     }
 
