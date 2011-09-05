@@ -1,0 +1,260 @@
+1.6.7 (August X, 2011)
+
+* Added "cover_photo" and "privacy" fields to Album.
+  Thanks to serg472 for the heads-up.
+* Added "checkins" and "phone" fields to Page.
+  Thanks to jaiswal.rahul for the heads-up about the "checkins" field.
+* Added an example project which shows how to route java.util.logging calls to Log4j.
+  It's available at http://restfb.com/examples/RestFB%20Log4j%20Example.zip
+  Thanks to Daniel Longosz for asking about this.
+
+1.6.6 (July 12, 2011)
+
+* Fixes a bug introduced in 1.6.5 where facebookClient.delete(...) would throw an NPE.
+  Thanks to Garret Collins.
+
+1.6.5 (July 4, 2011)
+
+* BREAKING CHANGE:
+  We are no longer passing around InputStream objects to represent binary files when publishing -
+  they have been replaced by instances of the new com.restfb.BinaryAttachment type.
+  So this method:
+	<T> T FacebookClient.publish(String connection, Class<T> objectType, InputStream inputStream, Parameter... parameters)
+	is now:
+  <T> T FacebookClient.publish(String connection, Class<T> objectType, BinaryAttachment binaryAttachment, Parameter... parameters)
+  This change was necessary to support correct video uploads (FB now requires a filename with a video extension, e.g. .mov) and the new Batch API.
+  Documentation and usage examples for com.restfb.BinaryAttachment are available on http://restfb.com.  
+* Added support for the new Batch API. The two new methods are:
+  List<BatchResponse> FacebookClient.executeBatch(BatchRequest... batchRequests)
+  List<BatchResponse> FacebookClient.executeBatch(List<BatchRequest> batchRequests, List<BinaryAttachment> binaryAttachments)
+  Thanks to everyone who asked for this!
+* Added support for the new video upload API endpoint via https://graph-video.facebook.com and fixed a multipart
+  filename bug that broke video uploads.
+  Thanks to yylaob@gmail.com for the filename bugfix and saylxxx@gmail.com and everyone else who asked for this!
+* All types under com.restfb.types now implement Serializable.
+  Thanks to everyone who asked for this!  
+* Fixed a numeric precision bug in JsonObject.getLong() which caused large numbers to be rounded incorrectly.
+  Thanks very much to ps@king.com for finding this and providing a patch.
+* DefaultJsonMapper can now instantiate types with no-argument constructors that are private, protected, or package-private -
+  you no longer have to expose your constructors if you don't want to.
+* JsonMapper.toJson(Object object, boolean ignoreNullValuedProperties) was added, which enables you to turn a Java object into
+  JSON without including any properties with null values. 
+* Added "comments", "likes", "position", and "images" fields to Photo.
+  Thanks to Andre Oosthuizen and Grace Win.
+* Added "name", "tags", and "source" fields to Video and marked "message" as deprecated.
+  Thanks to Andre Oosthuizen and Marcel Stoer.
+* Added "likes" and "access_token" fields to Page and deprecated "fan_count".  
+  Thanks to Shashank Agarwal and jspyeatt.
+* Added "object_id" field to Post.
+  Thanks to Grace Win.
+* Added "username" field to User.
+  Thanks to Iwan Gulenko.
+* Added "city", "state", and "country" fields to Checkin.Place.Location.
+  Thanks to Thom Nichols.
+* Removed "messages" and "likes" fields from StatusMessage because they're now connections.
+  Added the "type" field to StatusMessage.
+  Thanks to volkenborn@yahoo.com.
+
+1.6.4 (March 5, 2011)
+
+* Added "application" and "type" fields to Post.
+  Thanks to nelrib.
+* Removed "mobilePhone" and "address" fields from User.
+  Thanks to Marcel Stoer.
+* Added undocumented "properties" field to Post type.
+  
+1.6.3 (February 19, 2011)
+
+* RestFB now automatically uses the faster read-only endpoints for Graph and Old REST API calls when possible.
+  Thanks to Dmitry Naumenko for the suggestion.
+* POTENTIALLY BREAKING CHANGE: Old REST API calls (including FQL with the Graph API) will now throw
+  FacebookOAuthException instead of FacebookResponseStatusException when error code 190 is encountered.
+  Thanks to Ofer Fort for the suggestion.
+* It is now simple to customize how RestFB maps Facebook error responses to FacebookException instances
+  for both Graph and Old REST API errors by overriding DefaultFacebookClient.createGraphFacebookExceptionMapper() and
+  BaseFacebookClient.createLegacyFacebookExceptionMapper(), respectively.  The default instances returned
+  by both of these methods are now marked protected instead of anonymous classes so you can leverage them if you wish.
+  Thanks to Alexis Dufrenoy for the suggestion.
+* Added lots of new fields to User, e.g "sports" and "languages".
+  Thanks to Patrick Alberts for the patch.
+* Added new PageConnection type, useful for mapping partial page types returned by some connections, e.g. "me/music".
+  Thanks to Patrick Alberts for the patch.
+* Added undocumented "is_community_page" and "description" fields to the Page type.
+  Thanks to Ivan Viragine.
+* Can now customize HttpURLConnection creation in DefaultWebRequestor by overriding openConnection(URL url)
+  to support custom proxying etc.
+  Thanks to Matti Haro for the suggestion.
+* Added new Insight type which can be used like this:
+  Connection<Insight> insights = facebookClient.fetchConnection("PAGE_ID/insights", Insight.class);
+    
+1.6.2 (January 23, 2011)
+
+* You can now instruct DefaultJsonMapper how to handle mapping exceptions, e.g.
+  ignoring them and mapping as null instead of throwing an exception. 
+
+	FacebookClient facebookClient = new DefaultFacebookClient("MY_ACCESS_TOKEN",
+	  new DefaultWebRequestor(), new DefaultJsonMapper(new JsonMappingErrorHandler() {
+	    public boolean handleMappingError(String unmappableJson, Class<?> targetType, Exception e) {      
+	      // Here you might log the fact that JSON mapping failed.      
+	      err.println(format("Uh oh, mapping %s to %s failed...", unmappableJson, targetType));
+	
+	      // Returning true tells the mapper to map this JSON as null and keep going.
+	      // Returning false tells the mapper to throw an exception.      
+	      return true;
+	    }
+	  }));
+  
+  The default behavior is still to throw an exception immediately on mapping errors,
+  this callback interface is your way of saying "I know what I'm doing and want to
+  handle errors myself".  Very useful for keeping your app running in production
+  when Facebook changes the API unexpectedly.
+  Thanks to Igor Kabiljo for the suggestion.   
+* Added new "quotes" and "address" and "mobile_phone" fields to the User type.
+  Thanks to ne52 for the heads-up about the addition of the quotes field.
+* DateUtils.toDateFromMonthYearFormat now returns null for "0000-00" instead of 0 AD.
+  Not sure why FB gives us 0000-00 instead of null in some situations, e.g. work start date.
+
+1.6.1 (unofficial release)
+
+* We're now fully Mavenized - you can add RestFB to your Maven project like this:
+
+	<dependency>
+	  <groupId>com.restfb</groupId>
+	  <artifactId>restfb</artifactId>
+	  <version>1.6.2</version>
+	</dependency>
+
+  Many thanks to Kalle Korhonen, and congratulations to him for being the first additional RestFB committer!
+* JsonException is now unchecked.
+* Fix for start and end date handling on the Event type.
+  Thanks to Jason Peltzer.
+* @Facebook annotation on accessToken on Account type is now correctly mapped to "access_token".
+  Thanks to Scott Aaron.
+* Added the "category" field to the Checkin.Place type.
+  Thanks to Mattia Tommasone.
+* Latitude and Longitude fields on Checkin.Place are now of type Double instead of Float,
+  thereby supporting the full precision of the data returned by FB instead of truncating to fit correctly in a Float.
+
+1.6 (December 30, 2010)
+
+* POTENTIALLY BREAKING CHANGE: User.getPicture() has been removed.
+  To get the user's picture, simply construct a URL by hand, e.g. http://graph.facebook.com/USER_ID/picture
+* Now use java.util.logging instead of Log4j - RestFB now has 0 dependencies.
+* FacebookException now extends RuntimeException - you no longer have to catch it if you don't want to.
+  Thanks to Jeff Schnitzer.
+* Removed "contains" attribute on @Facebook annotation since it is no longer necessary.
+  Thanks to Igor Kabiljo for the initial patch.
+* Exposed and cleaned up previously-internal RestFB's repackaged JSON.org code in the new com.restfb.json package.
+* You may now tell JsonMapper to map to JsonObject, which permits you to have total control over result mapping at run time
+  (as opposed to the compile-time-only @Facebook annotation).
+* JsonMapper now supports having a Facebook JSON field mapped to multiple @Facebook-annotated Java fields.
+  This addresses the issue of Facebook returning the same field name but differently-structured data in certain situations.
+  See issues 56 and 90 for details.
+  Thanks to Daniel Winterstein, Igor Kabiljo, Marcel Stoer, Pramod Biligiri, and Tom Schindl for their input.
+* Exposed and cleaned up previously-internal RestFB utilities in the new com.restfb.util package. 
+* Added new exception package com.restfb.exception and exception types
+  (FacebookOAuthException, FacebookQueryParseException) for simple handling of common Graph API exception types.
+  Thanks to Jeff Schnitzer.
+* Added formal support for Connection paging by URL via FacebookClient.fetchConnectionPage() and the new Connection.getPreviousPageUrl()/getNextPageUrl().
+  No more manual offset calculation required.  Example:
+  
+  Connection<Post> myFeed = facebookClient.fetchConnection("me/feed", Post.class);
+
+  if(myFeed.hasNext()) {
+    Connection<Post> myFeedPage2 = facebookClient.fetchConnectionPage(myFeed.getNextPageUrl(), Post.class);
+    ...
+  }
+  
+  Thanks to Jakub Danilewicz.
+* Added FacebookClient.convertSessionKeysToAccessTokens() method.
+  Thanks to Scott Hernandez and Mattia Tommasone. 
+* Fixed issue where User.birthday causes mapping to fail if "show only month & date" is set on FB.
+  Thanks to Kalle Korhonen.
+* Old REST API now always uses the HTTPS endpoint.
+  Thanks to Christopher Oestlund.
+* Added embed_html, picture, icon, comments to Video type.
+  Thanks to Fahd Akbar and Chris Pruett.
+* Added Account type to support impersonation feature.
+  Thanks to jovanovich.
+* Fixed error-handling issues: 1) where HTTP 400 error code would throw an incorrect exception and 2) where error response JSON would not get
+  correctly read in this and other error situations.
+	Thanks to Igor Kabiljo, ovonick, and everyone else who reported this.
+* Performance enhancement: ReflectionUtils now caches @Facebook field information so we never have to reflect more than once.
+  Thanks to Igor Kabiljo for the patch.
+* Added Checkin type.
+  Thanks to everyone else who requested this and Colin Britton for the checkin code snippet.
+* Added StatusMessage type.
+* Added middle_name field to User type.
+  Thanks to Fehmican Saglam.
+
+1.5.4 (September 16, 2010)
+* Post comment type now handles case where FB returns an empty array instead of an object type.
+  Thanks to Pipo, CR, S13_Alan, Igor Kabiljo, and Jakub Danilewicz.
+
+1.5.3 (July 21, 2010)
+* NamedFacebookType now handles situation where FB returns, for example,
+  "hometown":"Beograd", instead of the expected "hometown":{"id":123,"name":"Belgrade, Serbia"}
+  Thanks to Igor Kabiljo for the bug report and suggested fix.
+* Mapper now gracefully handles situation where Facebook returns the not-JSON string "false" and instead of {}.
+  Thanks to Igor Kabiljo for the bug report and suggested fix.
+* The Post type's comments field changed on the Facebook side to include a "count" field.
+  Thanks to Jakub Danilewicz for the bug report and suggested fix.
+  Thanks to Igor Kabiljo for the suggested fix.    
+* Fixed infinite recursion bug that was triggerable in exceptional situations in ReflectionUtils.toString().
+  Thanks to Igor Kabiljo for the bug report and suggested fix.
+* Mapper fix for situations where Facebook returns the string "null" instead of an empty object or nothing.
+  Thanks to Igor Kabiljo for the bug report.
+* Timezone field in User is now a Double to account for timezones with fractional offsets.
+  Thanks to Sam for the bug report.
+* Changed Parameter's date marshaling to produce Facebook Date strings in a zero-based hour format.
+  Thanks to Jakub Danilewicz for the bug report and suggested fix.
+* Connection<?> has getNext() and getPrevious() methods that return the next/previous URLs returned by Facebook.
+* All fields in BaseFacebookClient, DefaultFacebookClient, and DefaultLegacyFacebookClient are protected for easier subclassing.
+  All Facebook API URLs are now overridable via protected accessor methods.
+  Thanks to Kalle Korhonen and bijuphilip0 for the enhancement requests.
+* Added locale field to User.
+
+1.5.2 (June 8, 2010)
+* No longer require an access token for the Graph API (now have a default constructor for DefaultFacebookClient).
+  Thanks to Yoav Shapira for the enhancement request.
+* Facebook changed the data in the Photo Tag object - updated to reflect that.
+  Thanks to Max for reporting. 
+* Facebook added fields to the User object - updated to reflect that.
+  Thanks to fellahst and ndimiduk for reporting.
+* HTTP GET operations executed by DefaultWebRequestor now use httpUrlConnection.setUseCaches(false).
+  Thanks to Jumpa for reporting this.
+* Special check to only URL-encode access token if it's not already URL-encoded.
+
+1.5.1 (May 14, 2010)
+* OAuth support broke in DefaultLegacyFacebookClient because Facebook changed the "token" param to "access_token".
+  Thanks to Antonio Casula for the initial problem report.
+  
+1.5 (May 1, 2010)
+* Added support for the new Facebook Graph API
+* Old REST API now has support for the new OAuth authentication tokens
+* Fix for multiqueries with empty resultsets throwing a JSON mapping exception
+* WebRequestor now supports POSTs which perform file uploading and GETs
+* The com.restfb.json undocumented package is now gone.  The org.json code is now package-private inside of com.restfb
+* Many small bugfixes and enhancements
+* Enhanced examples and documentation
+  Thanks to Ofer Fort, Ryan Wilson, and Alex Launi for their input.
+
+1.4 (April 21, 2010)
+* Added support for Java -> JSON mapping to support more complex API calls like stream.publish.
+  Thanks to Alex Launi and biz@layes.com for their input.
+
+1.3 (March 19, 2010)
+* In response to recent FB changes, JSON mapper now coerces empty JSON arrays to empty Java Strings if you're trying to map to a String field.
+  Thanks to Antonello Naccarato for reporting this!
+
+1.2 (March 2, 2010)
+* Fixed bug related to mapping JSON null to Java types
+* Library source is now included in the JAR for easy browsing in your IDE
+
+1.1 (February 23, 2010)
+* Formal support for fql.multiquery API call
+* Minor JSON mapping fixes and error message improvements
+* Updated website with fql.multiquery documentation and explicit mention of non-support of session key acquisition
+
+1.0 (February 2, 2010)
+* Initial release
