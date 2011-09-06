@@ -22,14 +22,19 @@
 
 package com.restfb.util;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TimeZone;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import com.restfb.FacebookClient;
@@ -146,9 +151,10 @@ public class InsightUtils {
   public static SortedMap<Date, JsonArray> executeInsightQueriesByDate(FacebookClient client, long pageObjectId,
       Set<String> metrics, Period period, Set<Date> periodEndDates) {
     /*
-     * pseudo code: String baseQuery = createBaseQuery(..); Map<String,String>
-     * queries = iterate through dates, add to end of baseQuery, put in map with
-     * an index associated with periodEndDates
+     * pseudo code: String baseQuery = createBaseQuery(..);
+     * 
+     * Map<String,String> queries = iterate through dates, add to end of
+     * baseQuery, put in map with an index associated with periodEndDates
      * 
      * JsonObject response = client.executeMultiquery(queries,
      * JsonObject.class);
@@ -157,18 +163,72 @@ public class InsightUtils {
      * the expected multiquery key indices cast each key value to JsonArray
      * resolve the key index back into a Date, store output in the outgoing map
      */
-    return null;
+    if (client == null) {
+      throw new IllegalArgumentException("client argument is required");
+    }
+    if (pageObjectId <= 0L) {
+      throw new IllegalArgumentException("pageObjectId should be a positive number");
+    }
+    if (period == null) {
+      throw new IllegalArgumentException("period argument is required");
+    }
+    if (isEmpty(periodEndDates)) {
+      throw new IllegalArgumentException("periodEndDates set should be non-empty");
+    }
+
+    // put dates into an array where we can easily access the index of each
+    // date, as
+    // these ordinal positions will be used as query identifiers in the
+    // MultiQuery
+    List<Date> datesByQueryIndex = new ArrayList<Date>(periodEndDates);
+
+    String baseQuery = createBaseQuery(period, pageObjectId, metrics);
+
+    Map<String, String> fqlByQueryIndex = buildQueries(baseQuery, datesByQueryIndex);
+
+    //
+    // WIP
+    //
+
+    SortedMap<Date, JsonArray> result = new TreeMap<Date, JsonArray>();
+
+    return result;
   }
 
-  private static String createBaseQuery(Period period, long pageObjectId, String metricInList) {
+  static Map<String, String> buildQueries(String baseQuery, List<Date> datesByQueryIndex) {
+    Map<String, String> fqlByQueryIndex = new LinkedHashMap<String, String>();
+    for (int queryIndex = 0; queryIndex < datesByQueryIndex.size(); queryIndex++) {
+      Date d = datesByQueryIndex.get(queryIndex);
+      String query = baseQuery + convertToUnixTime(d);
+      fqlByQueryIndex.put(String.valueOf(queryIndex), query);
+    }
+    return fqlByQueryIndex;
+  }
+
+  static String createBaseQuery(Period period, long pageObjectId, Set<String> metrics) {
     StringBuilder q = new StringBuilder();
     q.append("SELECT metric, value ");
     q.append("FROM insights ");
     q.append("WHERE object_id=");
     q.append(pageObjectId);
-    q.append(" AND metric IN (");
-    q.append(metricInList);
-    q.append(")");
+
+    if (!isEmpty(metrics)) {
+      q.append(" AND metric IN (");
+
+      boolean firstMetric = true;
+      for (String metric : metrics) {
+        if (firstMetric) {
+          firstMetric = false;
+        } else {
+          q.append(',');
+        }
+        q.append("'");
+        q.append(metric.trim());
+        q.append("'");
+      }
+      q.append(")");
+    }
+
     q.append(" AND period=");
     q.append(period.getPeriodLength());
     q.append(" AND end_time=");
@@ -236,9 +296,17 @@ public class InsightUtils {
    * 
    * @param input
    * @return
+   * @see {@link #convertToMidnightInPacificTimeZone(Date)}
+   * @see {@link #convertToUnixTime(Date)}
    */
-  static long getUnixTimeAtPSTMidnight(Date input) {
+  static long convertToUnixTimeAtPacificTimeZoneMidnight(Date input) {
     return convertToUnixTime(convertToMidnightInPacificTimeZone(input));
+  }
+
+  private static <T extends Object> boolean isEmpty(Collection<T> collection) {
+    if (collection == null || collection.isEmpty())
+      return true;
+    return false;
   }
 
   public enum Period {
