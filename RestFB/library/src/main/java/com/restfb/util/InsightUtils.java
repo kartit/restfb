@@ -27,6 +27,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,7 @@ import java.util.TreeSet;
 
 import com.restfb.FacebookClient;
 import com.restfb.json.JsonArray;
+import com.restfb.json.JsonObject;
 
 /**
  * A set of utilities to ease querying <a
@@ -46,10 +48,10 @@ import com.restfb.json.JsonArray;
  * Metrics</a> over several dates
  * 
  * @author Andrew Liles
- * @since 1.6.xxx TODO: fix version numbering
+ * @since 1.7.xxx TODO: fix version numbering
  */
 public class InsightUtils {
-  private static TimeZone PST_TIMEZONE = TimeZone.getTimeZone("PST");
+  private static final TimeZone PST_TIMEZONE = TimeZone.getTimeZone("PST");
 
   /**
    * Queries Facebook via FQL for several Insights at different date points
@@ -92,7 +94,7 @@ public class InsightUtils {
    * @see #executeInsightQueriesByDate(FacebookClient, long, Set, Period, Set)
    */
   public static Map<String, SortedMap<Date, Object>> executeInsightQueriesByMetricByDate(FacebookClient client,
-      long pageObjectId, Set<String> metrics, Period period, Set<Date> periodEndDates) {
+    String pageObjectId, Set<String> metrics, Period period, Set<Date> periodEndDates) {
     /*
      * pseudo code: Map<Date, JsonArray> result = executeInsightQueriesRaw(..)
      * Dissect the JsonArrays which contain one element for each of the metrics
@@ -148,8 +150,8 @@ public class InsightUtils {
    * @see #executeInsightQueriesByMetricByDate(FacebookClient, long, Set,
    *      Period, Set)
    */
-  public static SortedMap<Date, JsonArray> executeInsightQueriesByDate(FacebookClient client, long pageObjectId,
-      Set<String> metrics, Period period, Set<Date> periodEndDates) {
+  public static SortedMap<Date, JsonArray> executeInsightQueriesByDate(FacebookClient client, 
+    String pageObjectId, Set<String> metrics, Period period, Set<Date> periodEndDates) {
     /*
      * pseudo code: String baseQuery = createBaseQuery(..);
      * 
@@ -166,8 +168,8 @@ public class InsightUtils {
     if (client == null) {
       throw new IllegalArgumentException("client argument is required");
     }
-    if (pageObjectId <= 0L) {
-      throw new IllegalArgumentException("pageObjectId should be a positive number");
+    if (!hasText(pageObjectId)) {
+      throw new IllegalArgumentException("pageObjectId should be a non-empty string, probably a positive number");
     }
     if (period == null) {
       throw new IllegalArgumentException("period argument is required");
@@ -177,20 +179,39 @@ public class InsightUtils {
     }
 
     // put dates into an array where we can easily access the index of each
-    // date, as
-    // these ordinal positions will be used as query identifiers in the
-    // MultiQuery
+    // date, as these ordinal positions will be used as query identifiers 
+    // in the MultiQuery
     List<Date> datesByQueryIndex = new ArrayList<Date>(periodEndDates);
 
     String baseQuery = createBaseQuery(period, pageObjectId, metrics);
 
     Map<String, String> fqlByQueryIndex = buildQueries(baseQuery, datesByQueryIndex);
 
-    //
-    // WIP
-    //
-
     SortedMap<Date, JsonArray> result = new TreeMap<Date, JsonArray>();
+
+    if(!fqlByQueryIndex.isEmpty()) {
+      JsonObject response = client.executeMultiquery(fqlByQueryIndex, JsonObject.class);
+
+      //transform the response into a Map
+      for(Iterator<?> it = response.keys(); it.hasNext(); ) {
+        String key = (String) it.next();
+        JsonArray innerResult = (JsonArray) response.get(key); 
+
+        try {
+          //resolve the map key back into a date
+          int queryIndex = Integer.parseInt(key);
+          Date d = datesByQueryIndex.get(queryIndex);
+          if(d==null) {
+            throw new RuntimeException("MultiQuery response had an unexpected key value: " + key);
+          }
+
+          result.put(d, innerResult);
+        }
+        catch(NumberFormatException nfe) {
+          throw new RuntimeException("MultiQuery response had an unexpected key value: " + key, nfe);
+        }
+      }
+    }
 
     return result;
   }
@@ -205,27 +226,18 @@ public class InsightUtils {
     return fqlByQueryIndex;
   }
 
-  static String createBaseQuery(Period period, long pageObjectId, Set<String> metrics) {
+  static String createBaseQuery(Period period, String pageObjectId, Set<String> metrics) {
     StringBuilder q = new StringBuilder();
     q.append("SELECT metric, value ");
     q.append("FROM insights ");
-    q.append("WHERE object_id=");
+    q.append("WHERE object_id='");
     q.append(pageObjectId);
+    q.append('\'');
 
-    if (!isEmpty(metrics)) {
+    String metricInList = buildMetricInList(metrics);
+    if (hasText(metricInList)) {
       q.append(" AND metric IN (");
-
-      boolean firstMetric = true;
-      for (String metric : metrics) {
-        if (firstMetric) {
-          firstMetric = false;
-        } else {
-          q.append(',');
-        }
-        q.append("'");
-        q.append(metric.trim());
-        q.append("'");
-      }
+      q.append(metricInList);
       q.append(")");
     }
 
@@ -233,6 +245,25 @@ public class InsightUtils {
     q.append(period.getPeriodLength());
     q.append(" AND end_time=");
     return q.toString();
+  }
+
+  private static String buildMetricInList(Set<String> metrics) {
+    StringBuilder in = new StringBuilder();
+    if (!isEmpty(metrics)) {
+      int metricCount = 0;
+      for (String metric : metrics) {
+        if(hasText(metric)) {
+          if (metricCount>0) {
+            in.append(',');
+          }
+          in.append('\'');
+          in.append(metric.trim());
+          in.append('\'');
+          metricCount++;
+        }
+      }
+    }
+    return in.toString();
   }
 
   /**
@@ -280,7 +311,7 @@ public class InsightUtils {
 
   /**
    * Convert into a "unix time" which means convert into the number of seconds
-   * (NOT milliseconds) from the Epoc
+   * (NOT milliseconds) from the Epoch fit for the Facebook Query Language
    * 
    * @param input
    * @return
@@ -292,7 +323,7 @@ public class InsightUtils {
   /**
    * slide this time back to midnight in the PST timezone and convert into a
    * "unix time" which means convert into the number of seconds (NOT
-   * milliseconds) from the Epoc fit for the Facebook Query Language
+   * milliseconds) from the Epoch fit for the Facebook Query Language
    * 
    * @param input
    * @return
@@ -307,6 +338,10 @@ public class InsightUtils {
     if (collection == null || collection.isEmpty())
       return true;
     return false;
+  }
+
+  private static boolean hasText(String s) {
+    return (s!=null) && (s.length()>0);
   }
 
   public enum Period {
