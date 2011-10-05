@@ -40,6 +40,7 @@ import java.util.TreeSet;
 
 import com.restfb.FacebookClient;
 import com.restfb.json.JsonArray;
+import com.restfb.json.JsonException;
 import com.restfb.json.JsonObject;
 
 /**
@@ -51,29 +52,52 @@ import com.restfb.json.JsonObject;
  * @since 1.7.xxx TODO: fix version numbering
  */
 public class InsightUtils {
+
+  /**
+   * Used to describe period for multiquery into Facebook.
+   */
+  public enum Period {
+
+    DAY(86400), WEEK(604800), MONTH(2592000), LIFETIME(0);
+
+    private int periodLength;
+
+    private Period(int periodLength) {
+      this.periodLength = periodLength;
+    }
+
+    public int getPeriodLength() {
+      return periodLength;
+    }
+  }
+
   private static final TimeZone PST_TIMEZONE = TimeZone.getTimeZone("PST");
 
   /**
    * Queries Facebook via FQL for several Insights at different date points
-   * 
+   * <p>
    * The output groups the result by Metric and then by Date, matching the input
    * arguments. Maps entries may be null if Facebook does not return
    * corresponding data, e.g. when you query a metric which is not available at
    * the chosen period. The inner Map's Object value may be a strongly typed
    * value for some metrics in other cases Facebook returns a JsonObject.
+   * <p>
+   * Sample output, assuming 2 metrics were queried for 5 dates:
    * 
-   * TODO: fix formatting in below
-   * 
-   * Sample output, assuming 2 metrics were queried for 5 dates {
-   * page_active_users : 2011-jan-01 : 7 : 2011-jan-02 : 26 : 2011-jan-02 : 15 :
-   * 2011-jan-02 : 10 : 2011-jan-02 : 687 page_tab_views_login_top_unique :
-   * 2011-jan-01 : {"photos":1,"wall":7} : 2011-jan-02 :
-   * {"photos":8,"wall":25,"info":3} : 2011-jan-03 :
-   * {"app_237307273":1,"photos":
-   * 1,"app_494975287":1,"app_234747185":1,"wall":14,"info":2} : 2011-jan-04 :
-   * {"app_237307273":1,"photos":2,"app_234747185":1,"wall":10,"info":1} :
-   * 2011-jan-05 :
-   * {"app_494975287":2,"app_237307273":2,"photos":6,"wall":35,"info":6} }
+   * <pre>
+   * {page_active_users = {
+   * &nbsp;&nbsp;&nbsp; 2011-jan-01 = 7,
+   * &nbsp;&nbsp;&nbsp; 2011-jan-02 = 26,
+   * &nbsp;&nbsp;&nbsp; 2011-jan-03 = 15,
+   * &nbsp;&nbsp;&nbsp; 2011-jan-04 = 10,
+   * &nbsp;&nbsp;&nbsp; 2011-jan-05= 687},
+   * page_tab_views_login_top_unique = {
+   * &nbsp;&nbsp;&nbsp; 2011-jan-01 = {"photos":2,"app_4949752878":3,"wall":30},
+   * &nbsp;&nbsp;&nbsp; 2011-jan-02 = {"app_4949752878":1,"photos":1,"app_2373072738":2,"wall":23},
+   * &nbsp;&nbsp;&nbsp; 2011-jan-03 = {"app_4949752878":1,"wall":12},
+   * &nbsp;&nbsp;&nbsp; 2011-jan-04 = {"photos":1,"wall":11},
+   * &nbsp;&nbsp;&nbsp; 2011-jan-05 = {"app_494975287":2,"app_237307273":2,"photos":6,"wall":35,"info":6}}
+   * </pre>
    * 
    * @param client
    * @param pageObjectId
@@ -88,50 +112,77 @@ public class InsightUtils {
    *          normalized to be midnight in the PST timezone; see
    *          {@link #convertToMidnightInPSTTimeZone(Set)}
    * @return a map of maps: the outer keys will be all the metrics requested
-   *         that were available at the period/times requested. The innert keys
+   *         that were available at the period/times requested. The inner keys
    *         will be the set periodEndDates
    * @see #convertToMidnightInPSTTimeZone(Set)
    * @see #executeInsightQueriesByDate(FacebookClient, long, Set, Period, Set)
    */
-  public static Map<String, SortedMap<Date, Object>> executeInsightQueriesByMetricByDate(FacebookClient client,
-    String pageObjectId, Set<String> metrics, Period period, Set<Date> periodEndDates) {
-    /*
-     * pseudo code: Map<Date, JsonArray> result = executeInsightQueriesRaw(..)
-     * Dissect the JsonArrays which contain one element for each of the metrics
-     * queried, rebuild into a map of maps.
-     */
-    return null;
+  public static SortedMap<String, SortedMap<Date, Object>> executeInsightQueriesByMetricByDate(FacebookClient client,
+      String pageObjectId, Set<String> metrics, Period period, Set<Date> periodEndDates) {
+
+    SortedMap<Date, JsonArray> raw = executeInsightQueriesByDate(client, pageObjectId, metrics, period, periodEndDates);
+
+    SortedMap<String, SortedMap<Date, Object>> result = new TreeMap<String, SortedMap<Date, Object>>();
+
+    if (!raw.isEmpty()) {
+      for (Date date : raw.keySet()) {
+        JsonArray resultByMetric = raw.get(date);
+        // [{"metric":"page_active_users","value":582},
+        // {"metric":"page_tab_views_login_top_unique","value":{"wall":12,"app_4949752878":1}}]
+        for (int resultIndex = 0; resultIndex < resultByMetric.length(); resultIndex++) {
+          JsonObject metricResult = resultByMetric.getJsonObject(resultIndex);
+          try {
+            String metricName = metricResult.getString("metric");
+            Object metricValue = metricResult.get("value");
+
+            // store into output collection
+            SortedMap<Date, Object> resultByDate = result.get(metricName);
+            if (resultByDate == null) {
+              resultByDate = new TreeMap<Date, Object>();
+              result.put(metricName, resultByDate);
+            }
+            if (resultByDate.put(date, metricValue) != null) {
+              throw new RuntimeException("MultiQuery response has two results " + "for metricName: " + metricName
+                  + " and date: " + date);
+            }
+          } catch (JsonException jse) {
+            throw new RuntimeException("Could not decode result for " + metricResult + ": " + jse.getMessage(), jse);
+          }
+        }
+      }
+    }
+    return result;
   }
 
   /**
    * Queries Facebook via FQL for several Insights at different date points
-   * 
-   * A variation on {
+   * <p>
+   * A variation on
    * {@link #executeInsightQueriesByMetricByDate(FacebookClient, long, Set, Period, Set)}
    * , this method returns the raw output from the Facebook, keying the output
    * by date alone. The JsonArray value will contain the metrics that were
    * requested and available at the date.
+   * <p>
+   * Sample output, assuming 2 metrics were queried for 5 dates
    * 
-   * TODO: fix formatting in below
-   * 
-   * Sample output, assuming 2 metrics were queried for 5 dates {2011-jan-01 :
-   * [{"metric":"page_active_users","value":7},{"metric":
-   * "page_tab_views_login_top_unique","value":{"photos":1,"wall":7}}],
-   * 2011-jan-02 : [{"metric":"page_active_users","value":26},{"metric":
-   * "page_tab_views_login_top_unique"
-   * ,"value":{"photos":8,"wall":25,"info":3}}], 2011-jan-03 :
-   * [{"metric":"page_active_users"
-   * ,"value":15},{"metric":"page_tab_views_login_top_unique"
-   * ,"value":{"app_237307273"
-   * :1,"photos":1,"app_494975287":1,"app_234747185":1,"wall":14,"info":2}}],
-   * 2011-jan-04 : [{"metric":"page_active_users","value":10},{"metric":
-   * "page_tab_views_login_top_unique"
-   * ,"value":{"app_237307273":1,"photos":2,"app_234747185"
-   * :1,"wall":10,"info":1}}], 2011-jan-05 :
-   * [{"metric":"page_active_users","value"
-   * :687},{"metric":"page_tab_views_login_top_unique"
-   * ,"value":{"app_494975287":2
-   * ,"app_237307273":2,"photos":6,"wall":35,"info":6}}] }
+   * <pre>
+   * {2011-jan-01 = [
+   * &nbsp;&nbsp;&nbsp; {"metric":"page_active_users","value":7},
+   * &nbsp;&nbsp;&nbsp; {"metric":"page_tab_views_login_top_unique","value":{"photos":2,"app_4949752878":3,"wall":30}}], 
+   * 2011-jan-02 = [
+   * &nbsp;&nbsp;&nbsp; {"metric":"page_active_users","value":26},
+   * &nbsp;&nbsp;&nbsp; {"metric":"page_tab_views_login_top_unique","value":{"app_4949752878":1,"photos":1,"app_2373072738":2,"wall":23}}], 
+   * 2011-jan-03 = [
+   * &nbsp;&nbsp;&nbsp; {"metric":"page_active_users","value":15},
+   * &nbsp;&nbsp;&nbsp; {"metric":"page_tab_views_login_top_unique","value":{"app_4949752878":1,"wall":12}}], 
+   * 2011-jan-04 = [
+   * &nbsp;&nbsp;&nbsp; {"metric":"page_active_users","value":10},
+   * &nbsp;&nbsp;&nbsp; {"metric":"page_tab_views_login_top_unique","value":{"photos":1,"wall":11}}]
+   * 2011-jan-05 = [
+   * &nbsp;&nbsp;&nbsp; {"metric":"page_active_users","value":687},
+   * &nbsp;&nbsp;&nbsp; {"metric":"page_tab_views_login_top_unique","value":{"app_494975287":2,"app_237307273":2,"photos":6,"wall":35,"info":6}}]
+   * }
+   * </pre>
    * 
    * @param client
    * @param pageObjectId
@@ -147,24 +198,11 @@ public class InsightUtils {
    *          {@link #convertToMidnightInPSTTimeZone(Set)}
    * @return
    * @see #convertToMidnightInPSTTimeZone(Set)
-   * @see #executeInsightQueriesByMetricByDate(FacebookClient, long, Set,
+   * @see #executeInsightQueriesByMetricByDate(FacebookClient, String, Set,
    *      Period, Set)
    */
-  public static SortedMap<Date, JsonArray> executeInsightQueriesByDate(FacebookClient client, 
-    String pageObjectId, Set<String> metrics, Period period, Set<Date> periodEndDates) {
-    /*
-     * pseudo code: String baseQuery = createBaseQuery(..);
-     * 
-     * Map<String,String> queries = iterate through dates, add to end of
-     * baseQuery, put in map with an index associated with periodEndDates
-     * 
-     * JsonObject response = client.executeMultiquery(queries,
-     * JsonObject.class);
-     * 
-     * Map<Date, JsonArray> result = TreeMap... iterate over the result using
-     * the expected multiquery key indices cast each key value to JsonArray
-     * resolve the key index back into a Date, store output in the outgoing map
-     */
+  public static SortedMap<Date, JsonArray> executeInsightQueriesByDate(FacebookClient client, String pageObjectId,
+      Set<String> metrics, Period period, Set<Date> periodEndDates) {
     if (client == null) {
       throw new IllegalArgumentException("client argument is required");
     }
@@ -179,9 +217,12 @@ public class InsightUtils {
     }
 
     // put dates into an array where we can easily access the index of each
-    // date, as these ordinal positions will be used as query identifiers 
+    // date, as these ordinal positions will be used as query identifiers
     // in the MultiQuery
     List<Date> datesByQueryIndex = new ArrayList<Date>(periodEndDates);
+    // sort the list in Date order so the implementation is tolerant of a
+    // chaotic periodEndDates iteration order
+    Collections.sort(datesByQueryIndex);
 
     String baseQuery = createBaseQuery(period, pageObjectId, metrics);
 
@@ -189,30 +230,30 @@ public class InsightUtils {
 
     SortedMap<Date, JsonArray> result = new TreeMap<Date, JsonArray>();
 
-    if(!fqlByQueryIndex.isEmpty()) {
+    if (!fqlByQueryIndex.isEmpty()) {
+      // request the client sends all the queries in fqlByQueryIndex to Facebook
+      // in one go
+      // and have the raw JsonObject be returned
       JsonObject response = client.executeMultiquery(fqlByQueryIndex, JsonObject.class);
 
-      //transform the response into a Map
-      for(Iterator<?> it = response.keys(); it.hasNext(); ) {
+      // transform the response into a Map
+      for (Iterator<?> it = response.keys(); it.hasNext();) {
         String key = (String) it.next();
-        JsonArray innerResult = (JsonArray) response.get(key); 
+        JsonArray innerResult = (JsonArray) response.get(key);
 
         try {
-          //resolve the map key back into a date
+          // resolve the map key back into a date
           int queryIndex = Integer.parseInt(key);
           Date d = datesByQueryIndex.get(queryIndex);
-          if(d==null) {
+          if (d == null) {
             throw new RuntimeException("MultiQuery response had an unexpected key value: " + key);
           }
-
           result.put(d, innerResult);
-        }
-        catch(NumberFormatException nfe) {
+        } catch (NumberFormatException nfe) {
           throw new RuntimeException("MultiQuery response had an unexpected key value: " + key, nfe);
         }
       }
     }
-
     return result;
   }
 
@@ -252,8 +293,8 @@ public class InsightUtils {
     if (!isEmpty(metrics)) {
       int metricCount = 0;
       for (String metric : metrics) {
-        if(hasText(metric)) {
-          if (metricCount>0) {
+        if (hasText(metric)) {
+          if (metricCount > 0) {
             in.append(',');
           }
           in.append('\'');
@@ -341,23 +382,7 @@ public class InsightUtils {
   }
 
   private static boolean hasText(String s) {
-    return (s!=null) && (s.length()>0);
-  }
-
-  public enum Period {
-
-    DAY(86400), WEEK(604800), MONTH(2592000), LIFETIME(0);
-
-    private int periodLength;
-
-    private Period(int periodLength) {
-      this.periodLength = periodLength;
-    }
-
-    public int getPeriodLength() {
-      return periodLength;
-    }
-
+    return (s != null) && (s.length() > 0);
   }
 
 }
