@@ -27,6 +27,8 @@ import static com.restfb.util.InsightUtils.convertToMidnightInPacificTimeZone;
 import static com.restfb.util.InsightUtils.convertToUnixTimeAtPacificTimeZoneMidnight;
 import static com.restfb.util.InsightUtils.createBaseQuery;
 import static com.restfb.util.InsightUtils.executeInsightQueriesByDate;
+import static com.restfb.util.InsightUtils.executeInsightQueriesByMetricByDate;
+import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -59,8 +61,8 @@ import com.restfb.DefaultJsonMapper;
 import com.restfb.FacebookClient;
 import com.restfb.WebRequestor;
 import com.restfb.json.JsonArray;
+import com.restfb.json.JsonObject;
 import com.restfb.util.InsightUtils.Period;
-
 
 /**
  * Unit tests that exercise {@link com.restfb.util.InsightUtils}.
@@ -104,7 +106,7 @@ public class InsightUtilsTest {
     Date d20030629_0000pst = sdfPST.parse("20030629_0000");
 
     Date actual = convertToMidnightInPacificTimeZone(d20030630_0221utc);
-    Assert.assertEquals(d20030629_0000pst, actual);
+    assertEquals(d20030629_0000pst, actual);
   }
 
   @Test
@@ -113,7 +115,7 @@ public class InsightUtilsTest {
     Date d20030630_0000pst = sdfPST.parse("20030630_0000");
 
     Date actual = convertToMidnightInPacificTimeZone(d20030630_1503utc);
-    Assert.assertEquals(d20030630_0000pst, actual);
+    assertEquals(d20030630_0000pst, actual);
   }
 
   @Test
@@ -127,10 +129,10 @@ public class InsightUtilsTest {
     inputs.add(d20030630_1503utc);
 
     SortedSet<Date> actuals = convertToMidnightInPacificTimeZone(inputs);
-    Assert.assertEquals(2, actuals.size());
+    assertEquals(2, actuals.size());
     Iterator<Date> it = actuals.iterator();
-    Assert.assertEquals(d20030629_0000pst, it.next());
-    Assert.assertEquals(d20030630_0000pst, it.next());
+    assertEquals(d20030629_0000pst, it.next());
+    assertEquals(d20030630_0000pst, it.next());
   }
 
   @Test
@@ -144,7 +146,7 @@ public class InsightUtilsTest {
     Date d20100916_1800utc = sdfUTC.parse("20100916_1800");
 
     long actual = convertToUnixTimeAtPacificTimeZoneMidnight(d20100916_1800utc);
-    Assert.assertEquals(1284620400L, actual);
+    assertEquals(1284620400L, actual);
   }
 
   @Test
@@ -155,34 +157,35 @@ public class InsightUtilsTest {
     Date d20100917_0659utc = sdfUTC.parse("20100917_0659");
 
     long actual = convertToUnixTimeAtPacificTimeZoneMidnight(d20100917_0659utc);
-    Assert.assertEquals(1284620400L, actual);
+    assertEquals(1284620400L, actual);
 
     Date d20100917_0700utc = sdfUTC.parse("20100917_0700");
 
     actual = convertToUnixTimeAtPacificTimeZoneMidnight(d20100917_0700utc);
-    Assert.assertEquals(1284620400L + (60 * 60 * 24), actual);
+    assertEquals(1284620400L + (60 * 60 * 24), actual);
   }
 
   @Test
   public void createBaseQuery0metrics() {
     Set<String> metrics = Collections.emptySet();
-    Assert.assertEquals("SELECT metric, value FROM insights WHERE object_id='31698190356' AND "
-      + "period=604800 AND end_time=", createBaseQuery(Period.WEEK, TEST_PAGE_OBJECT, metrics));
+    assertEquals("SELECT metric, value FROM insights WHERE object_id='31698190356' AND "
+        + "period=604800 AND end_time=", createBaseQuery(Period.WEEK, TEST_PAGE_OBJECT, metrics));
 
     // what about all empties/nulls in the list?
     metrics = new LinkedHashSet<String>();
     metrics.add(null);
     metrics.add("");
     metrics.add("");
-    Assert.assertEquals("SELECT metric, value FROM insights WHERE object_id='31698190356' AND "
-      + "period=604800 AND end_time=", createBaseQuery(Period.WEEK, TEST_PAGE_OBJECT, metrics));
+    assertEquals("SELECT metric, value FROM insights WHERE object_id='31698190356' AND "
+        + "period=604800 AND end_time=", createBaseQuery(Period.WEEK, TEST_PAGE_OBJECT, metrics));
   }
 
   @Test
   public void createBaseQuery1metric() {
     Set<String> metrics = Collections.singleton("page_active_users");
-    Assert.assertEquals("SELECT metric, value FROM insights WHERE object_id='31698190356' AND metric IN "
-      + "('page_active_users') AND period=604800 AND end_time=", createBaseQuery(Period.WEEK, TEST_PAGE_OBJECT, metrics));
+    assertEquals("SELECT metric, value FROM insights WHERE object_id='31698190356' AND metric IN "
+        + "('page_active_users') AND period=604800 AND end_time=",
+      createBaseQuery(Period.WEEK, TEST_PAGE_OBJECT, metrics));
   }
 
   @Test
@@ -191,8 +194,8 @@ public class InsightUtilsTest {
     metrics.add("page_comment_removes");
     metrics.add("page_active_users");
     metrics.add("page_like_adds_source_unique");
-    Assert.assertEquals("SELECT metric, value FROM insights WHERE object_id='31698190356' AND metric IN "
-      + "('page_comment_removes','page_active_users','page_like_adds_source_unique') AND period=86400 AND end_time=",
+    assertEquals("SELECT metric, value FROM insights WHERE object_id='31698190356' AND metric IN "
+        + "('page_comment_removes','page_active_users','page_like_adds_source_unique') AND period=86400 AND end_time=",
       createBaseQuery(Period.DAY, TEST_PAGE_OBJECT, metrics));
   }
 
@@ -205,32 +208,32 @@ public class InsightUtilsTest {
     metrics.add("");
     metrics.add("page_like_adds_source_unique");
     metrics.add(null);
-    Assert.assertEquals("SELECT metric, value FROM insights WHERE object_id='31698190356' AND metric IN "
-      + "('page_comment_removes','page_like_adds_source_unique') AND period=86400 AND end_time=",
+    assertEquals("SELECT metric, value FROM insights WHERE object_id='31698190356' AND metric IN "
+        + "('page_comment_removes','page_like_adds_source_unique') AND period=86400 AND end_time=",
       createBaseQuery(Period.DAY, TEST_PAGE_OBJECT, metrics));
   }
 
   @Test
   public void buildQueries1() throws ParseException {
     long t20101205_0000 = 1291536000L;
-    Assert.assertEquals(t20101205_0000, convertToUnixTimeAtPacificTimeZoneMidnight(d20101205_0000pst));
-    Assert.assertEquals(t20101205_0000, d20101205_0000pst.getTime() / 1000L);
+    assertEquals(t20101205_0000, convertToUnixTimeAtPacificTimeZoneMidnight(d20101205_0000pst));
+    assertEquals(t20101205_0000, d20101205_0000pst.getTime() / 1000L);
 
     List<Date> datesByQueryIndex = new ArrayList<Date>();
     datesByQueryIndex.add(d20101205_0000pst);
 
     String baseQuery =
-      "SELECT metric, value FROM insights WHERE object_id='31698190356' AND metric IN "
-      + "('page_active_users') AND period=604800 AND end_time=";
+        "SELECT metric, value FROM insights WHERE object_id='31698190356' AND metric IN "
+            + "('page_active_users') AND period=604800 AND end_time=";
 
     Map<String, String> fqlByQueryIndex = buildQueries(baseQuery, datesByQueryIndex);
-    Assert.assertEquals(1, fqlByQueryIndex.size());
+    assertEquals(1, fqlByQueryIndex.size());
 
     String fql = fqlByQueryIndex.values().iterator().next();
     Assert
-    .assertEquals(
-      "SELECT metric, value FROM insights WHERE object_id='31698190356' AND metric IN ('page_active_users') AND period=604800 AND end_time="
-      + t20101205_0000, fql);
+      .assertEquals(
+        "SELECT metric, value FROM insights WHERE object_id='31698190356' AND metric IN ('page_active_users') AND period=604800 AND end_time="
+            + t20101205_0000, fql);
   }
 
   @Test
@@ -246,11 +249,11 @@ public class InsightUtilsTest {
       utcDates.add(c.getTime());
       c.add(Calendar.DAY_OF_MONTH, 1);
     }
-    Assert.assertEquals(30, utcDates.size());
+    assertEquals(30, utcDates.size());
 
     // convert into PST and convert into a list
     List<Date> datesByQueryIndex = new ArrayList<Date>(convertToMidnightInPacificTimeZone(utcDates));
-    Assert.assertEquals(30, datesByQueryIndex.size());
+    assertEquals(30, datesByQueryIndex.size());
 
     // Mon Nov 01 00:00:00 2010 PST
     long day0 = sdfPST.parse("20101101_0000").getTime() / 1000L;
@@ -260,57 +263,198 @@ public class InsightUtilsTest {
     long day29 = sdfPST.parse("20101130_0000").getTime() / 1000L;
 
     String baseQuery =
-      "SELECT metric, value FROM insights WHERE object_id='31698190356' AND metric IN "
-      + "('page_active_users','page_audio_plays') AND period=86400 AND end_time=";
+        "SELECT metric, value FROM insights WHERE object_id='31698190356' AND metric IN "
+            + "('page_active_users','page_audio_plays') AND period=86400 AND end_time=";
 
     Map<String, String> fqlByQueryIndex = buildQueries(baseQuery, datesByQueryIndex);
-    Assert.assertEquals(30, fqlByQueryIndex.size());
+    assertEquals(30, fqlByQueryIndex.size());
 
-    Assert.assertEquals("SELECT metric, value FROM insights WHERE object_id='31698190356' AND metric IN "
-      + "('page_active_users','page_audio_plays') AND period=86400 AND end_time=" + day0, fqlByQueryIndex.get("0"));
-    Assert.assertEquals("SELECT metric, value FROM insights WHERE object_id='31698190356' AND metric IN "
-      + "('page_active_users','page_audio_plays') AND period=86400 AND end_time=" + day6, fqlByQueryIndex.get("6"));
-    Assert.assertEquals("SELECT metric, value FROM insights WHERE object_id='31698190356' AND metric IN "
-      + "('page_active_users','page_audio_plays') AND period=86400 AND end_time=" + day29, fqlByQueryIndex.get("29"));
+    assertEquals("SELECT metric, value FROM insights WHERE object_id='31698190356' AND metric IN "
+        + "('page_active_users','page_audio_plays') AND period=86400 AND end_time=" + day0, fqlByQueryIndex.get("0"));
+    assertEquals("SELECT metric, value FROM insights WHERE object_id='31698190356' AND metric IN "
+        + "('page_active_users','page_audio_plays') AND period=86400 AND end_time=" + day6, fqlByQueryIndex.get("6"));
+    assertEquals("SELECT metric, value FROM insights WHERE object_id='31698190356' AND metric IN "
+        + "('page_active_users','page_audio_plays') AND period=86400 AND end_time=" + day29, fqlByQueryIndex.get("29"));
   }
 
-  @Test(expected=IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void executeInsightQueriesByDate_badArgs1() {
     executeInsightQueriesByDate(null, TEST_PAGE_OBJECT, null, Period.DAY, Collections.singleton(d20101205_0000pst));
   }
 
-  @Test(expected=IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void executeInsightQueriesByDate_badArgs2() {
-    executeInsightQueriesByDate(defaultNoAccessTokenClient, "", null, Period.DAY, Collections.singleton(d20101205_0000pst));
+    executeInsightQueriesByDate(defaultNoAccessTokenClient, "", null, Period.DAY,
+      Collections.singleton(d20101205_0000pst));
   }
 
-  @Test(expected=IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void executeInsightQueriesByDate_badArgs3() {
-    executeInsightQueriesByDate(defaultNoAccessTokenClient, TEST_PAGE_OBJECT, null, null, Collections.singleton(d20101205_0000pst));
+    executeInsightQueriesByDate(defaultNoAccessTokenClient, TEST_PAGE_OBJECT, null, null,
+      Collections.singleton(d20101205_0000pst));
   }
 
-  @Test(expected=IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void executeInsightQueriesByDate_badArgs4() {
     executeInsightQueriesByDate(defaultNoAccessTokenClient, TEST_PAGE_OBJECT, null, Period.DAY, new HashSet<Date>());
   }
 
   @Test
-  public void executeInsightQueries1() throws IOException {
-    //note that the query that is passed to the FacebookClient WebRequestor is ignored,
-    //so arguments {String pageObjectId, Set<String> metrics, Period period} are 
-    //effectively ignored.  In this test we are validating the WebRequestor's json
-    //is properly procssed
-    SortedMap<Date, JsonArray> results = executeInsightQueriesByDate(
-      createFixedResponseFacebookClient("multiResponse_2metrics_1date.json"), 
-      TEST_PAGE_OBJECT, null, Period.DAY, Collections.singleton(d20101205_0000pst));
+  public void executeInsightQueriesByDate1() throws IOException {
+    // note that the query that is passed to the FacebookClient WebRequestor is
+    // ignored,
+    // so arguments of executeInsightQueriesByDate:
+    // (String pageObjectId, Set<String> metrics, Period period)
+    // are effectively ignored. In this test we are validating the
+    // WebRequestor's json
+    // is properly processed
+    SortedMap<Date, JsonArray> results =
+        executeInsightQueriesByDate(createFixedResponseFacebookClient("multiResponse_2metrics_1date.json"),
+          TEST_PAGE_OBJECT, null, Period.DAY, Collections.singleton(d20101205_0000pst));
     Assert.assertNotNull(results);
-    Assert.assertEquals(1, results.size());
+    assertEquals(1, results.size());
     JsonArray ja = results.get(d20101205_0000pst);
     Assert.assertNotNull(ja);
-    //not ideal that this test requires on a stable JsonArray.toString()
-    Assert.assertEquals(
+    // not ideal that this test requires on a stable JsonArray.toString()
+    assertEquals(
       "[{\"metric\":\"page_fans\",\"value\":3777},{\"metric\":\"page_fans_gender\",\"value\":{\"U\":58,\"F\":1656,\"M\":2014}}]",
       ja.toString());
+  }
+
+  @Test
+  public void executeInsightQueriesByDate2() throws IOException, ParseException {
+    // note that the query that is passed to the FacebookClient WebRequestor is
+    // ignored,
+    // so arguments of executeInsightQueriesByDate:
+    // (String pageObjectId, Set<String> metrics, Period period)
+    // are effectively ignored. In this test we are validating the
+    // WebRequestor's json
+    // is properly processed
+
+    Date d20030629_0000pst = sdfPST.parse("20030629_0000");
+    Date d20030630_0000pst = sdfPST.parse("20030630_0000");
+    Date d20030701_0000pst = sdfPST.parse("20030701_0000");
+    Date d20030702_0000pst = sdfPST.parse("20030702_0000");
+    // intentionally using (chaotic) HashSet to ensure implementation is
+    // tolerant of that collection
+    Set<Date> periodEndDates = new HashSet<Date>();
+    periodEndDates.add(d20030629_0000pst);
+    periodEndDates.add(d20030630_0000pst);
+    periodEndDates.add(d20030701_0000pst);
+    periodEndDates.add(d20030702_0000pst);
+
+    SortedMap<Date, JsonArray> results =
+        executeInsightQueriesByDate(createFixedResponseFacebookClient("multiResponse_2metrics_4dates.json"),
+          TEST_PAGE_OBJECT, null, Period.DAY, periodEndDates);
+    Assert.assertNotNull(results);
+    System.out.println(results);
+    assertEquals(4, results.size());
+    // not ideal that this test requires on a stable JsonArray.toString()
+    assertEquals(
+      "[{\"metric\":\"page_active_users\",\"value\":761},{\"metric\":\"page_tab_views_login_top_unique\",\"value\":{\"photos\":2,\"app_4949752878\":3,\"wall\":30}}]",
+      results.get(d20030629_0000pst).toString());
+    assertEquals(
+      "[{\"metric\":\"page_active_users\",\"value\":705},{\"metric\":\"page_tab_views_login_top_unique\",\"value\":{\"app_4949752878\":1,\"photos\":1,\"app_2373072738\":2,\"wall\":23}}]",
+      results.get(d20030630_0000pst).toString());
+    assertEquals(
+      "[{\"metric\":\"page_active_users\",\"value\":582},{\"metric\":\"page_tab_views_login_top_unique\",\"value\":{\"app_4949752878\":1,\"wall\":12}}]",
+      results.get(d20030701_0000pst).toString());
+    assertEquals(
+      "[{\"metric\":\"page_active_users\",\"value\":125},{\"metric\":\"page_tab_views_login_top_unique\",\"value\":{\"photos\":1,\"wall\":11}}]",
+      results.get(d20030702_0000pst).toString());
+  }
+
+  @Test
+  public void executeInsightQueriesByMetricByDate1() throws IOException {
+    // note that the query that is passed to the FacebookClient WebRequestor is
+    // ignored,
+    // so arguments of executeInsightQueriesByDate:
+    // (String pageObjectId, Set<String> metrics, Period period)
+    // are effectively ignored. In this test we are validating the
+    // WebRequestor's json
+    // is properly processed
+    SortedMap<String, SortedMap<Date, Object>> results =
+        executeInsightQueriesByMetricByDate(createFixedResponseFacebookClient("multiResponse_2metrics_1date.json"),
+          TEST_PAGE_OBJECT, null, Period.DAY, Collections.singleton(d20101205_0000pst));
+    Assert.assertNotNull(results);
+    assertEquals(2, results.size());
+
+    SortedMap<Date, Object> metricResult = results.get("page_fans");
+    assertEquals(1, metricResult.size());
+    assertEquals(3777, metricResult.get(d20101205_0000pst));
+
+    metricResult = results.get("page_fans_gender");
+    assertEquals(1, metricResult.size());
+    Object metricValue = metricResult.get(d20101205_0000pst);
+    Assert.assertTrue(metricValue instanceof JsonObject);
+    JsonObject o = (JsonObject) metricValue;
+    assertEquals(58, o.getInt("U"));
+    assertEquals(1656, o.getInt("F"));
+    assertEquals(2014, o.getInt("M"));
+  }
+
+  @Test
+  public void executeInsightQueriesByMetricByDate2() throws IOException, ParseException {
+    // note that the query that is passed to the FacebookClient WebRequestor is
+    // ignored,
+    // so arguments of executeInsightQueriesByDate:
+    // (String pageObjectId, Set<String> metrics, Period period)
+    // are effectively ignored. In this test we are validating the
+    // WebRequestor's json
+    // is properly processed
+    Date d20030629_0000pst = sdfPST.parse("20030629_0000");
+    Date d20030630_0000pst = sdfPST.parse("20030630_0000");
+    Date d20030701_0000pst = sdfPST.parse("20030701_0000");
+    Date d20030702_0000pst = sdfPST.parse("20030702_0000");
+    // intentionally using (chaotic) HashSet to ensure implementation is
+    // tolerant of that collection
+    Set<Date> periodEndDates = new HashSet<Date>();
+    periodEndDates.add(d20030629_0000pst);
+    periodEndDates.add(d20030630_0000pst);
+    periodEndDates.add(d20030701_0000pst);
+    periodEndDates.add(d20030702_0000pst);
+
+    SortedMap<String, SortedMap<Date, Object>> results =
+        executeInsightQueriesByMetricByDate(createFixedResponseFacebookClient("multiResponse_2metrics_4dates.json"),
+          TEST_PAGE_OBJECT, null, Period.DAY, periodEndDates);
+    Assert.assertNotNull(results);
+    assertEquals(2, results.size());
+
+    SortedMap<Date, Object> metricResult = results.get("page_active_users");
+    assertEquals(4, metricResult.size());
+    // {"name":0,"fql_result_set":[{"metric":"page_active_users","value":761},{"metric":"page_tab_views_login_top_unique","value":{"wall":30,"app_4949752878":3,"photos":2}}]},
+    // here we validate the date map is sorted, so the results will come out in
+    // a predictable order
+    Iterator<Object> itValues = metricResult.values().iterator();
+    assertEquals(761, itValues.next());
+    assertEquals(705, itValues.next());
+    assertEquals(582, itValues.next());
+    assertEquals(125, itValues.next());
+
+    metricResult = results.get("page_tab_views_login_top_unique");
+    assertEquals(4, metricResult.size());
+    JsonObject o = (JsonObject) metricResult.get(d20030629_0000pst);
+    assertEquals(3, o.length());
+    assertEquals(2, o.getInt("photos"));
+    assertEquals(3, o.getInt("app_4949752878"));
+    assertEquals(30, o.getInt("wall"));
+
+    o = (JsonObject) metricResult.get(d20030630_0000pst);
+    assertEquals(4, o.length());
+    assertEquals(1, o.getInt("photos"));
+    assertEquals(1, o.getInt("app_4949752878"));
+    assertEquals(2, o.getInt("app_2373072738"));
+    assertEquals(23, o.getInt("wall"));
+
+    o = (JsonObject) metricResult.get(d20030701_0000pst);
+    assertEquals(2, o.length());
+    assertEquals(1, o.getInt("app_4949752878"));
+    assertEquals(12, o.getInt("wall"));
+
+    o = (JsonObject) metricResult.get(d20030702_0000pst);
+    assertEquals(2, o.length());
+    assertEquals(1, o.getInt("photos"));
+    assertEquals(11, o.getInt("wall"));
   }
 
   /**
@@ -331,8 +475,8 @@ public class InsightUtilsTest {
   private static FacebookClient createFixedResponseFacebookClient(String pathToJson) throws IOException {
     WebRequestor wr = new ClasspathWebRequestor(JSON_RESOURCES_PREFIX + pathToJson);
     String jsonBody = wr.executeGet(null).getBody();
-    Assert.assertTrue("path to json not found:" + JSON_RESOURCES_PREFIX + pathToJson, 
-      (jsonBody!=null) && (jsonBody.length()>0));
+    Assert.assertTrue("path to json not found:" + JSON_RESOURCES_PREFIX + pathToJson,
+      (jsonBody != null) && (jsonBody.length() > 0));
     return new DefaultFacebookClient(null, wr, new DefaultJsonMapper());
   }
 }
