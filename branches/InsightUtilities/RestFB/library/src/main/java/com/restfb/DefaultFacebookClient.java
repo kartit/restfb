@@ -351,7 +351,7 @@ public class DefaultFacebookClient extends BaseFacebookClient implements Faceboo
 
     try {
       JsonArray jsonArray =
-          new JsonArray(makeRequest("fql.multiquery", false, false, null,
+          new JsonArray(makeRequest("fql.multiquery", true, false, null,
             parametersWithAdditionalParameter(Parameter.with(QUERIES_PARAM_NAME, queriesToJson(queries)), parameters)));
 
       JsonObject normalizedJson = new JsonObject();
