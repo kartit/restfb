@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
@@ -279,24 +280,32 @@ public class InsightUtilsTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void executeInsightQueriesByDate_badArgs1() {
-    executeInsightQueriesByDate(null, TEST_PAGE_OBJECT, null, Period.DAY, Collections.singleton(d20101205_0000pst));
+    executeInsightQueriesByDate(null, TEST_PAGE_OBJECT, Collections.singleton("page_active_users"), Period.DAY,
+      Collections.singleton(d20101205_0000pst));
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void executeInsightQueriesByDate_badArgs2() {
-    executeInsightQueriesByDate(defaultNoAccessTokenClient, "", null, Period.DAY,
+    executeInsightQueriesByDate(defaultNoAccessTokenClient, "", Collections.singleton("page_active_users"), Period.DAY,
       Collections.singleton(d20101205_0000pst));
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void executeInsightQueriesByDate_badArgs3() {
-    executeInsightQueriesByDate(defaultNoAccessTokenClient, TEST_PAGE_OBJECT, null, null,
-      Collections.singleton(d20101205_0000pst));
+    executeInsightQueriesByDate(defaultNoAccessTokenClient, TEST_PAGE_OBJECT,
+      Collections.singleton("page_active_users"), null, Collections.singleton(d20101205_0000pst));
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void executeInsightQueriesByDate_badArgs4() {
-    executeInsightQueriesByDate(defaultNoAccessTokenClient, TEST_PAGE_OBJECT, null, Period.DAY, new HashSet<Date>());
+    executeInsightQueriesByDate(defaultNoAccessTokenClient, TEST_PAGE_OBJECT,
+      Collections.singleton("page_active_users"), Period.DAY, new HashSet<Date>());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void executeInsightQueriesByDate_badArgs5() {
+    executeInsightQueriesByDate(defaultNoAccessTokenClient, TEST_PAGE_OBJECT, new HashSet<String>(), Period.DAY,
+      Collections.singleton(d20101205_0000pst));
   }
 
   @Test
@@ -310,7 +319,8 @@ public class InsightUtilsTest {
     // is properly processed
     SortedMap<Date, JsonArray> results =
         executeInsightQueriesByDate(createFixedResponseFacebookClient("multiResponse_2metrics_1date.json"),
-          TEST_PAGE_OBJECT, null, Period.DAY, Collections.singleton(d20101205_0000pst));
+          TEST_PAGE_OBJECT, toStringSet("page_fans", "page_fans_gender"), Period.DAY,
+          Collections.singleton(d20101205_0000pst));
     Assert.assertNotNull(results);
     assertEquals(1, results.size());
     JsonArray ja = results.get(d20101205_0000pst);
@@ -345,7 +355,8 @@ public class InsightUtilsTest {
 
     SortedMap<Date, JsonArray> results =
         executeInsightQueriesByDate(createFixedResponseFacebookClient("multiResponse_2metrics_4dates.json"),
-          TEST_PAGE_OBJECT, null, Period.DAY, periodEndDates);
+          TEST_PAGE_OBJECT, toStringSet("page_active_users", "page_tab_views_login_top_unique"), Period.DAY,
+          periodEndDates);
     Assert.assertNotNull(results);
     System.out.println(results);
     assertEquals(4, results.size());
@@ -375,7 +386,8 @@ public class InsightUtilsTest {
     // is properly processed
     SortedMap<String, SortedMap<Date, Object>> results =
         executeInsightQueriesByMetricByDate(createFixedResponseFacebookClient("multiResponse_2metrics_1date.json"),
-          TEST_PAGE_OBJECT, null, Period.DAY, Collections.singleton(d20101205_0000pst));
+          TEST_PAGE_OBJECT, toStringSet("page_fans", "page_fans_gender"), Period.DAY,
+          Collections.singleton(d20101205_0000pst));
     Assert.assertNotNull(results);
     assertEquals(2, results.size());
 
@@ -416,7 +428,8 @@ public class InsightUtilsTest {
 
     SortedMap<String, SortedMap<Date, Object>> results =
         executeInsightQueriesByMetricByDate(createFixedResponseFacebookClient("multiResponse_2metrics_4dates.json"),
-          TEST_PAGE_OBJECT, null, Period.DAY, periodEndDates);
+          TEST_PAGE_OBJECT, toStringSet("page_active_users", "page_tab_views_login_top_unique"), Period.DAY,
+          periodEndDates);
     Assert.assertNotNull(results);
     assertEquals(2, results.size());
 
@@ -478,5 +491,9 @@ public class InsightUtilsTest {
     Assert.assertTrue("path to json not found:" + JSON_RESOURCES_PREFIX + pathToJson,
       (jsonBody != null) && (jsonBody.length() > 0));
     return new DefaultFacebookClient(null, wr, new DefaultJsonMapper());
+  }
+
+  private static Set<String> toStringSet(String... metrics) {
+    return new LinkedHashSet<String>(Arrays.asList(metrics));
   }
 }
