@@ -103,8 +103,8 @@ public class InsightUtils {
    * @param pageObjectId
    *          mandatory object_id to query
    * @param metrics
-   *          if the set is is null/empty then all metrics will be queried for
-   *          the given period
+   *          a not null/empty set of metrics that will be queried for the given
+   *          period
    * @param period
    *          mandatory period
    * @param periodEndDates
@@ -188,8 +188,8 @@ public class InsightUtils {
    * @param pageObjectId
    *          mandatory object_id to query
    * @param metrics
-   *          if the set is is null/empty then all metrics will be queried for
-   *          the given period
+   *          a not null/empty set of metrics that will be queried for the given
+   *          period
    * @param period
    *          mandatory period
    * @param periodEndDates
@@ -208,6 +208,9 @@ public class InsightUtils {
     }
     if (!hasText(pageObjectId)) {
       throw new IllegalArgumentException("pageObjectId should be a non-empty string, probably a positive number");
+    }
+    if (isEmpty(metrics)) {
+      throw new IllegalArgumentException("metrics set should be non-empty");
     }
     if (period == null) {
       throw new IllegalArgumentException("period argument is required");
