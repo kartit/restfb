@@ -58,7 +58,11 @@ public class InsightUtils {
    */
   public enum Period {
 
-    DAY(86400), WEEK(604800), MONTH(2592000), LIFETIME(0);
+    DAY(60 * 60 * 24), 
+    WEEK(60 * 60 * 24 * 7), 
+    DAYS_28(60 * 60 * 24 * 28), 
+    MONTH(2592000), 
+    LIFETIME(0);
 
     private int periodLength;
 
