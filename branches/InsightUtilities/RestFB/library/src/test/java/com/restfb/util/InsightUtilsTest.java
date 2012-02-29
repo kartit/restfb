@@ -470,6 +470,15 @@ public class InsightUtilsTest {
     assertEquals(11, o.getInt("wall"));
   }
 
+  @Test
+  public void periodLengths() {
+    assertEquals(86400, Period.DAY.getPeriodLength());
+    assertEquals(604800, Period.WEEK.getPeriodLength());
+    assertEquals(2419200, Period.DAYS_28.getPeriodLength());
+    assertEquals(2592000, Period.MONTH.getPeriodLength());
+    assertEquals(0, Period.LIFETIME.getPeriodLength());
+  }
+
   /**
    * As there is no easy constructor for making a SimpleDateFormat specifying
    * both a Locale and Timezone a utility is provided here
