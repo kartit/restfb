@@ -58,11 +58,7 @@ public class InsightUtils {
    */
   public enum Period {
 
-    DAY(60 * 60 * 24), 
-    WEEK(60 * 60 * 24 * 7), 
-    DAYS_28(60 * 60 * 24 * 28), 
-    MONTH(2592000), 
-    LIFETIME(0);
+    DAY(60 * 60 * 24), WEEK(60 * 60 * 24 * 7), DAYS_28(60 * 60 * 24 * 28), MONTH(2592000), LIFETIME(0);
 
     private int periodLength;
 
@@ -76,6 +72,7 @@ public class InsightUtils {
   }
 
   private static final TimeZone PST_TIMEZONE = TimeZone.getTimeZone("PST");
+  private static final long SECONDS_IN_DAY = 60 * 60 * 24;
 
   /**
    * Queries Facebook via FQL for several Insights at different date points
@@ -268,7 +265,7 @@ public class InsightUtils {
     Map<String, String> fqlByQueryIndex = new LinkedHashMap<String, String>();
     for (int queryIndex = 0; queryIndex < datesByQueryIndex.size(); queryIndex++) {
       Date d = datesByQueryIndex.get(queryIndex);
-      String query = baseQuery + convertToUnixTime(d);
+      String query = baseQuery + convertToUnixTimeOneDayLater(d);
       fqlByQueryIndex.put(String.valueOf(queryIndex), query);
     }
     return fqlByQueryIndex;
@@ -359,27 +356,42 @@ public class InsightUtils {
 
   /**
    * Convert into a "unix time" which means convert into the number of seconds
-   * (NOT milliseconds) from the Epoch fit for the Facebook Query Language
+   * (NOT milliseconds) from the Epoch fit for the Facebook Query Language.
+   * Notice that if you want data for September 15th then you need to present to
+   * Facebook the NEXT DAY, ie. the upper exclusive limit of your date range. So
+   * beyond all the sliding to midnight code you see in
+   * {@link #convertToMidnightInPacificTimeZone(Date)}, we need to go further
+   * and slide this input date forward one day.
+   * 
+   * In retrospect, this should have been implemented via the Facebook end_time_date() function
    * 
    * @param input
    * @return
    */
-  static long convertToUnixTime(Date input) {
-    return input.getTime() / 1000L;
+  static long convertToUnixTimeOneDayLater(Date input) {
+    long time = input.getTime() / 1000L;
+    // note we cannot use a Daylight sensitive Calendar here since that would
+    // adjust the time incorrectly over the DST junction
+    time += SECONDS_IN_DAY;
+    return time;
   }
 
   /**
-   * slide this time back to midnight in the PST timezone and convert into a
+   * Slide this time back to midnight in the PST timezone and convert into a
    * "unix time" which means convert into the number of seconds (NOT
-   * milliseconds) from the Epoch fit for the Facebook Query Language
+   * milliseconds) from the Epoch fit for the Facebook Query Language. Notice
+   * that if you want data for September 15th then you need to present to
+   * Facebook the NEXT DAY, ie. the upper exclusive limit of your date range. So
+   * beyond all the sliding to midnight issue, we need to go further and slide
+   * this input date forward one day.
    * 
    * @param input
    * @return
    * @see {@link #convertToMidnightInPacificTimeZone(Date)}
    * @see {@link #convertToUnixTime(Date)}
    */
-  static long convertToUnixTimeAtPacificTimeZoneMidnight(Date input) {
-    return convertToUnixTime(convertToMidnightInPacificTimeZone(input));
+  static long convertToUnixTimeAtPacificTimeZoneMidnightOneDayLater(Date input) {
+    return convertToUnixTimeOneDayLater(convertToMidnightInPacificTimeZone(input));
   }
 
   private static <T extends Object> boolean isEmpty(Collection<T> collection) {
